@@ -1,0 +1,26 @@
+{
+  "name": "Casalino – KI-Wohnungsassistent",
+  "short_name": "Casalino",
+  "description": "Finde deine Traumwohnung in der Schweiz mit KI-Unterstützung.",
+  "start_url": "/de",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#E8503E",
+  "orientation": "portrait-primary",
+  "lang": "de-CH",
+  "categories": ["lifestyle", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
