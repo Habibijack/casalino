@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { FavoriteButton } from './favorite-button';
+import { MatchBadge } from './match-badge';
 
 type ListingData = {
   id: string;
@@ -17,6 +18,7 @@ type ListingCardProps = {
   listing: ListingData;
   locale: string;
   isFavorited?: boolean;
+  matchScore?: number;
 };
 
 function formatPrice(price: number | null) {
@@ -24,7 +26,7 @@ function formatPrice(price: number | null) {
   return `CHF ${price.toLocaleString('de-CH')}`;
 }
 
-export function ListingCard({ listing, locale, isFavorited = false }: ListingCardProps) {
+export function ListingCard({ listing, locale, isFavorited = false, matchScore }: ListingCardProps) {
   return (
     <Link href={`/${locale}/listings/${listing.id}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
@@ -67,7 +69,10 @@ export function ListingCard({ listing, locale, isFavorited = false }: ListingCar
                 {formatPrice(listing.price_chf)}
                 <span className="text-xs font-normal text-muted-foreground">/Mt.</span>
               </span>
-              <div className="flex gap-2 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                {matchScore !== undefined && matchScore > 0 && (
+                  <MatchBadge score={matchScore} compact />
+                )}
                 {listing.rooms && <span>{listing.rooms} Zi.</span>}
                 {listing.area_m2 && <span>{listing.area_m2} m²</span>}
               </div>
