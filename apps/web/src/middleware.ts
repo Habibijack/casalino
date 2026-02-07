@@ -1,39 +1,33 @@
 import createIntlMiddleware from 'next-intl/middleware';
-import { createServerClient } from '@supabase/ssr';
-import { type NextRequest } from 'next/server';
-import { routing } from './i18n/routing';
+import { NextResponse, type NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
+import { routing } from '@/i18n/routing';
 
-const handleI18nRouting = createIntlMiddleware(routing);
+// Public routes that don't require auth
+const publicRoutes = ['/login', '/auth/callback', '/api/health'];
+
+// Create intl middleware
+const intlMiddleware = createIntlMiddleware(routing);
 
 export async function middleware(request: NextRequest) {
-  // 1. Handle i18n routing (locale detection, redirects)
-  const response = handleI18nRouting(request);
+  const { pathname } = request.nextUrl;
 
-  // 2. Refresh Supabase auth token via cookies
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
+  // 1. Always refresh Supabase session
+  const supabaseResponse = await updateSession(request);
 
-  // Refreshes the auth token if expired
-  await supabase.auth.getUser();
+  // 2. Handle i18n routing
+  const intlResponse = intlMiddleware(request);
 
-  return response;
+  // 3. Merge cookies from Supabase into intl response
+  if (supabaseResponse.cookies.getAll().length > 0) {
+    const response = intlResponse || NextResponse.next();
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      response.cookies.set(cookie.name, cookie.value, cookie);
+    });
+    return response;
+  }
+
+  return intlResponse;
 }
 
 export const config = {
