@@ -1,6 +1,7 @@
 import { getSession } from '@/lib/auth/get-session';
 import { redirect } from 'next/navigation';
 import { BottomTabs } from '@/components/navigation/bottom-tabs';
+import { ChatProvider } from '@/components/chat/chat-provider';
 
 type Props = {
   children: React.ReactNode;
@@ -16,9 +17,11 @@ export default async function ProtectedLayout({ children, params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {children}
+    <ChatProvider userLanguage={session.preferredLanguage}>
+      <div className="min-h-screen bg-background pb-20">
+        {children}
+      </div>
       <BottomTabs locale={locale} />
-    </div>
+    </ChatProvider>
   );
 }
