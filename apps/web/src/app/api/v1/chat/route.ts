@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body: unknown = await request.json();
-
     const {
       messages,
       listingId,

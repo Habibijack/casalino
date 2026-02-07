@@ -79,8 +79,9 @@ export function ChatProvider({ children, userLanguage }: ChatProviderProps) {
       {/* FAB */}
       <ChatFab onClick={openChat} isOpen={chatState.isOpen} />
 
-      {/* Chat Panel */}
+      {/* Chat Panel – key forces fresh useChat when context changes */}
       <ChatContainer
+        key={chatState.listingId ?? 'main'}
         isOpen={chatState.isOpen}
         onClose={closeChat}
         title={chatState.title}
