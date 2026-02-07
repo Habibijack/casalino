@@ -44,5 +44,22 @@
     "listings": "Annunci",
     "dossier": "Dossier",
     "profile": "Profilo"
+  },
+  "profile": {
+    "title": "Il mio profilo",
+    "personalInfo": "Informazioni personali",
+    "name": "Nome",
+    "namePlaceholder": "Il tuo nome completo",
+    "email": "E-mail",
+    "language": "Lingua preferita",
+    "subscription": "Abbonamento",
+    "free": "Gratuito",
+    "premium": "Premium",
+    "turbo": "Turbo",
+    "save": "Salva",
+    "saved": "Salvato!",
+    "dangerZone": "Zona pericolosa",
+    "deleteAccount": "Eliminare il conto",
+    "logout": "Esci"
   }
 }

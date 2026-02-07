@@ -1,13 +1,12 @@
 import { getSession } from '@/lib/auth/get-session';
 import { redirect } from 'next/navigation';
-import { BottomTabs } from '@/components/navigation/bottom-tabs';
+import { ProfileForm } from './profile-form';
 
 type Props = {
-  children: React.ReactNode;
   params: Promise<{ locale: string }>;
 };
 
-export default async function ProtectedLayout({ children, params }: Props) {
+export default async function ProfilePage({ params }: Props) {
   const { locale } = await params;
   const session = await getSession();
 
@@ -16,9 +15,8 @@ export default async function ProtectedLayout({ children, params }: Props) {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      {children}
-      <BottomTabs locale={locale} />
-    </div>
+    <main className="max-w-lg mx-auto p-6">
+      <ProfileForm session={session} locale={locale} />
+    </main>
   );
 }
