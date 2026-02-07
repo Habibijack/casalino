@@ -4,3 +4,4 @@ export * from './listings';
 export * from './conversations';
 export * from './documents';
 export * from './subscriptions';
+export * from './favorites';

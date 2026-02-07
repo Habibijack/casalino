@@ -82,6 +82,17 @@ export default async function DashboardPage({ params }: Props) {
           </a>
           <div className="border-t border-border" />
           <a
+            href={`/${locale}/search-profiles`}
+            className="flex items-center gap-3 p-3 rounded-lg hover:bg-background transition-colors"
+          >
+            <span className="text-xl">🎯</span>
+            <div>
+              <div className="text-sm font-medium">Suchprofile</div>
+              <div className="text-xs text-muted-foreground">Automatische Benachrichtigungen einrichten</div>
+            </div>
+          </a>
+          <div className="border-t border-border" />
+          <a
             href={`/${locale}/dossier`}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-background transition-colors"
           >
