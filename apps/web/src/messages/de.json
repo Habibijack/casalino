@@ -1,0 +1,48 @@
+{
+  "common": {
+    "appName": "Casalino",
+    "tagline": "Dein KI-Wohnungsassistent für die Schweiz"
+  },
+  "home": {
+    "title": "Casalino",
+    "subtitle": "Dein KI-Wohnungsassistent für die Schweiz",
+    "searchButton": "Wohnung suchen",
+    "learnMore": "Mehr erfahren",
+    "features": {
+      "search": {
+        "title": "🔍 KI-Suche",
+        "description": "Beschreibe was du suchst – die KI findet passende Wohnungen."
+      },
+      "multilingual": {
+        "title": "🌍 Mehrsprachig",
+        "description": "Schreibe in deiner Sprache – Bewerbungen in der Inserat-Sprache."
+      },
+      "dossier": {
+        "title": "📄 Dossier",
+        "description": "Alle Dokumente an einem Ort. KI-generiertes Motivationsschreiben."
+      }
+    }
+  },
+  "auth": {
+    "login": "Anmelden",
+    "register": "Registrieren",
+    "logout": "Abmelden",
+    "email": "E-Mail-Adresse",
+    "emailPlaceholder": "deine@email.ch",
+    "sendMagicLink": "Magic Link senden",
+    "orContinueWith": "oder weiter mit",
+    "continueWithGoogle": "Weiter mit Google",
+    "checkEmail": "Prüfe deine E-Mail!",
+    "checkEmailDescription": "Wir haben dir einen Login-Link gesendet. Klicke darauf um dich anzumelden.",
+    "backToLogin": "Zurück zum Login",
+    "welcomeTitle": "Willkommen bei Casalino",
+    "welcomeSubtitle": "Melde dich an um loszulegen",
+    "termsNotice": "Mit der Anmeldung akzeptierst du unsere AGB und Datenschutzrichtlinie."
+  },
+  "nav": {
+    "search": "Suche",
+    "listings": "Inserate",
+    "dossier": "Dossier",
+    "profile": "Profil"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "common": {
+    "appName": "Casalino",
+    "tagline": "Ton assistant IA pour trouver un appartement en Suisse"
+  },
+  "home": {
+    "title": "Casalino",
+    "subtitle": "Ton assistant IA pour trouver un appartement en Suisse",
+    "searchButton": "Chercher un appartement",
+    "learnMore": "En savoir plus",
+    "features": {
+      "search": {
+        "title": "🔍 Recherche IA",
+        "description": "Décris ce que tu cherches – l'IA trouve les appartements adaptés."
+      },
+      "multilingual": {
+        "title": "🌍 Multilingue",
+        "description": "Écris dans ta langue – les candidatures dans la langue de l'annonce."
+      },
+      "dossier": {
+        "title": "📄 Dossier",
+        "description": "Tous les documents en un seul endroit. Lettre de motivation générée par IA."
+      }
+    }
+  },
+  "auth": {
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "logout": "Se déconnecter",
+    "email": "Adresse e-mail",
+    "emailPlaceholder": "ton@email.ch",
+    "sendMagicLink": "Envoyer le lien magique",
+    "orContinueWith": "ou continuer avec",
+    "continueWithGoogle": "Continuer avec Google",
+    "checkEmail": "Vérifie ton e-mail !",
+    "checkEmailDescription": "Nous t'avons envoyé un lien de connexion. Clique dessus pour te connecter.",
+    "backToLogin": "Retour à la connexion",
+    "welcomeTitle": "Bienvenue chez Casalino",
+    "welcomeSubtitle": "Connecte-toi pour commencer",
+    "termsNotice": "En t'inscrivant, tu acceptes nos CGV et notre politique de confidentialité."
+  },
+  "nav": {
+    "search": "Recherche",
+    "listings": "Annonces",
+    "dossier": "Dossier",
+    "profile": "Profil"
+  }
+}
