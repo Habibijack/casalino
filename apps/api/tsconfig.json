@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declaration": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@casalino/db": ["../../packages/db/src"],
+      "@casalino/shared": ["../../packages/shared/src"]
+    }
+  },
+  "include": ["src/**/*"]
+}
