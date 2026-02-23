@@ -1,49 +1,147 @@
 import { z } from 'zod';
-import { LOCALES, CHAT_TYPES, DOCUMENT_TYPES, LISTING_SOURCES } from './constants';
+import { MAX_PAGE_SIZE, SWISS_CANTONS } from './constants';
 
-// User
-export const createUserSchema = z.object({
+// ---------------------
+// Pagination
+// ---------------------
+
+export const paginationSchema = z.object({
+  cursor: z.string().uuid().optional(),
+  limit: z.number().min(1).max(MAX_PAGE_SIZE).default(20),
+  direction: z.enum(['forward', 'backward']).default('forward'),
+});
+
+// ---------------------
+// Organization
+// ---------------------
+
+export const createOrganizationSchema = z.object({
+  name: z.string().min(2).max(200),
+  slug: z.string().min(2).max(100).regex(/^[a-z0-9-]+$/),
+  contactEmail: z.string().email().optional(),
+  contactPhone: z.string().max(50).optional(),
+  website: z.string().url().optional(),
+  address: z.string().max(500).optional(),
+  city: z.string().max(100).optional(),
+  postalCode: z.string().max(10).optional(),
+  canton: z.enum(SWISS_CANTONS).optional(),
+});
+
+// ---------------------
+// Org Members
+// ---------------------
+
+export const inviteMemberSchema = z.object({
   email: z.string().email(),
-  fullName: z.string().min(2).max(100).optional(),
-  preferredLanguage: z.enum(LOCALES).default('de'),
+  role: z.enum(['admin', 'editor', 'viewer']).default('viewer'),
 });
 
-// Search Profile
-export const createSearchProfileSchema = z.object({
-  name: z.string().min(1).max(100).default('Mein Suchprofil'),
-  cities: z.array(z.string()).default([]),
-  minRooms: z.number().min(1).max(10).optional(),
-  maxRooms: z.number().min(1).max(10).optional(),
-  minPrice: z.number().min(0).optional(),
-  maxPrice: z.number().min(0).optional(),
-  maxCommute: z.number().min(0).max(120).optional(),
-  keywords: z.array(z.string()).default([]),
+export const updateMemberRoleSchema = z.object({
+  role: z.enum(['admin', 'editor', 'viewer']),
 });
 
-// Chat Message
-export const sendMessageSchema = z.object({
-  conversationId: z.string().uuid().optional(),
-  chatType: z.enum(CHAT_TYPES).default('main'),
-  listingId: z.string().uuid().optional(),
-  content: z.string().min(1).max(5000),
+// ---------------------
+// Listings
+// ---------------------
+
+export const createListingSchema = z.object({
+  referenceNumber: z.string().max(50).optional(),
+  address: z.string().min(3).max(255),
+  plz: z.string().min(4).max(10),
+  city: z.string().min(1).max(100),
+  canton: z.enum(SWISS_CANTONS).optional(),
+  rooms: z.number().min(0.5).max(20),
+  areaSqm: z.number().min(1).max(10000).optional(),
+  priceChf: z.number().min(0).max(100000),
+  nkChf: z.number().min(0).max(10000).optional(),
+  floor: z.number().min(-5).max(100).optional(),
+  availableFrom: z.string().datetime().optional(),
+  descriptionDe: z.string().max(5000).optional(),
+  descriptionFr: z.string().max(5000).optional(),
+  descriptionIt: z.string().max(5000).optional(),
+  features: z.array(z.string()).default([]),
 });
 
-// Document Upload
-export const uploadDocumentSchema = z.object({
-  type: z.enum(DOCUMENT_TYPES),
-  name: z.string().min(1).max(255),
-  mimeType: z.string(),
-  sizeBytes: z.number().max(10 * 1024 * 1024), // 10MB max
+export const updateListingSchema = createListingSchema.partial();
+
+export const updateListingStatusSchema = z.object({
+  status: z.enum(['draft', 'live', 'viewing', 'assigned', 'archived']),
 });
 
-// Listing Filter
 export const listingFilterSchema = z.object({
+  status: z.enum(['draft', 'live', 'viewing', 'assigned', 'archived']).optional(),
   city: z.string().optional(),
-  minRooms: z.number().optional(),
-  maxRooms: z.number().optional(),
-  minPrice: z.number().optional(),
-  maxPrice: z.number().optional(),
-  source: z.enum(LISTING_SOURCES).optional(),
-  page: z.number().min(1).default(1),
-  limit: z.number().min(1).max(50).default(20),
+  canton: z.enum(SWISS_CANTONS).optional(),
+  search: z.string().max(200).optional(),
+}).merge(paginationSchema);
+
+// ---------------------
+// Applications
+// ---------------------
+
+export const createApplicationSchema = z.object({
+  listingId: z.string().uuid(),
+  applicantName: z.string().min(2).max(255),
+  applicantEmail: z.string().email().optional(),
+  applicantPhone: z.string().max(50).optional(),
+  applicantLanguage: z.enum(['de', 'fr', 'it', 'en']).default('de'),
+  householdSize: z.number().min(1).max(20).optional(),
+  incomeChf: z.number().min(0).optional(),
+  employmentType: z.string().max(50).optional(),
+  hasPets: z.boolean().default(false),
+  petType: z.string().max(50).optional(),
+  desiredMoveDate: z.string().optional(),
+  coverLetter: z.string().max(5000).optional(),
+  hasSwissResidence: z.boolean().default(true),
+});
+
+export const updateApplicationStatusSchema = z.object({
+  status: z.enum(['new', 'screening', 'invited', 'rejected', 'confirmed']),
+});
+
+// ---------------------
+// Viewings
+// ---------------------
+
+export const createViewingSchema = z.object({
+  listingId: z.string().uuid(),
+  applicationId: z.string().uuid(),
+  slotStart: z.string().datetime(),
+  slotEnd: z.string().datetime(),
+});
+
+export const updateViewingStatusSchema = z.object({
+  status: z.enum(['invited', 'confirmed', 'noshow', 'appeared']),
+  feedbackPositive: z.boolean().optional(),
+  feedbackNote: z.string().max(2000).optional(),
+});
+
+// ---------------------
+// Contracts
+// ---------------------
+
+export const createContractSchema = z.object({
+  listingId: z.string().uuid(),
+  applicationId: z.string().uuid(),
+});
+
+export const updateContractStatusSchema = z.object({
+  status: z.enum(['draft', 'sent', 'signed']),
+});
+
+// ---------------------
+// Documents
+// ---------------------
+
+export const uploadDocumentSchema = z.object({
+  applicationId: z.string().uuid(),
+  type: z.enum([
+    'betreibungsauszug',
+    'lohnausweis',
+    'ausweis',
+    'arbeitsvertrag',
+    'vermieter_referenz',
+  ]),
+  fileName: z.string().min(1).max(255),
+  mimeType: z.string(),
 });

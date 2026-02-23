@@ -6,14 +6,10 @@ import { headers } from 'next/headers';
 
 export async function signInWithMagicLink(formData: FormData) {
   const email = formData.get('email');
-  const locale = formData.get('locale');
 
   if (!email || typeof email !== 'string') {
-    return { error: 'Email ist erforderlich' };
+    return { error: 'E-Mail ist erforderlich' };
   }
-
-  const resolvedLocale =
-    typeof locale === 'string' && locale.length > 0 ? locale : 'de';
 
   const supabase = await createSupabaseServerClient();
   const headersList = await headers();
@@ -22,7 +18,7 @@ export async function signInWithMagicLink(formData: FormData) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: {
-      emailRedirectTo: `${origin}/${resolvedLocale}/auth/callback`,
+      emailRedirectTo: `${origin}/auth/callback`,
     },
   });
 
@@ -30,10 +26,10 @@ export async function signInWithMagicLink(formData: FormData) {
     return { error: error.message };
   }
 
-  return { success: true, message: 'Check deine E-Mail für den Login-Link!' };
+  return { success: true, message: 'Login-Link wurde gesendet!' };
 }
 
-export async function signInWithGoogle(locale: string = 'de') {
+export async function signInWithGoogle() {
   const supabase = await createSupabaseServerClient();
   const headersList = await headers();
   const origin = headersList.get('origin') ?? 'http://localhost:3737';
@@ -41,7 +37,7 @@ export async function signInWithGoogle(locale: string = 'de') {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: `${origin}/${locale}/auth/callback`,
+      redirectTo: `${origin}/auth/callback`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -60,10 +56,10 @@ export async function signInWithGoogle(locale: string = 'de') {
   return { error: 'Unbekannter Fehler' };
 }
 
-export async function signOut(locale: string = 'de') {
+export async function signOut() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
-  redirect(`/${locale}/login`);
+  redirect('/login');
 }
 
 export async function getUser() {

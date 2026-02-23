@@ -5,220 +5,175 @@ import * as schema from './schema';
 
 dotenv.config({ path: '.env.local' });
 
-const connectionString = process.env.DATABASE_URL!;
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  console.error('DATABASE_URL not set');
+  process.exit(1);
+}
+
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });
 
 async function seed() {
-  console.log('🌱 Seeding Casalino database...\n');
+  console.log('Seeding Casalino B2B database...\n');
 
-  // Clean existing data (in correct order due to foreign keys)
-  console.log('🧹 Cleaning existing data...');
-  await db.delete(schema.messages);
-  await db.delete(schema.conversations);
+  // Clean existing data (reverse FK order)
+  console.log('Cleaning existing data...');
+  await db.delete(schema.auditLog);
+  await db.delete(schema.communications);
+  await db.delete(schema.contracts);
+  await db.delete(schema.viewings);
+  await db.delete(schema.creditChecks);
   await db.delete(schema.documents);
-  await db.delete(schema.subscriptions);
-  await db.delete(schema.searchProfiles);
+  await db.delete(schema.applications);
   await db.delete(schema.listings);
+  await db.delete(schema.orgMembers);
+  await db.delete(schema.organizations);
   await db.delete(schema.users);
 
-  // 1. Create test users
-  console.log('👤 Creating test users...');
-  const [userDE, userFR, userIT] = await db
+  // 1. Create test organization
+  console.log('Creating test organization...');
+  const [org] = await db
+    .insert(schema.organizations)
+    .values({
+      name: 'Muster Immobilien AG',
+      slug: 'muster-immobilien',
+      contactEmail: 'info@muster-immobilien.ch',
+      contactPhone: '+41 44 123 45 67',
+      address: 'Bahnhofstrasse 10',
+      city: 'Zuerich',
+      postalCode: '8001',
+      canton: 'ZH',
+    })
+    .returning();
+
+  console.log(`  Created org: ${org.name}`);
+
+  // 2. Create test users
+  console.log('Creating test users...');
+  const [admin, editor, viewer] = await db
     .insert(schema.users)
     .values([
       {
-        supabaseAuthId: 'test-auth-de-001',
-        email: 'maria@test.ch',
-        fullName: 'Maria Müller',
-        preferredLanguage: 'de',
+        supabaseAuthId: 'test-auth-admin-001',
+        email: 'admin@muster-immobilien.ch',
+        fullName: 'Anna Muster',
       },
       {
-        supabaseAuthId: 'test-auth-fr-001',
-        email: 'jean@test.ch',
-        fullName: 'Jean Dupont',
-        preferredLanguage: 'fr',
+        supabaseAuthId: 'test-auth-editor-001',
+        email: 'peter@muster-immobilien.ch',
+        fullName: 'Peter Keller',
       },
       {
-        supabaseAuthId: 'test-auth-it-001',
-        email: 'luca@test.ch',
-        fullName: 'Luca Rossi',
-        preferredLanguage: 'it',
+        supabaseAuthId: 'test-auth-viewer-001',
+        email: 'lisa@muster-immobilien.ch',
+        fullName: 'Lisa Weber',
       },
     ])
     .returning();
 
-  console.log(`  ✅ Created ${userDE.fullName}, ${userFR.fullName}, ${userIT.fullName}`);
+  console.log(`  Created: ${admin.fullName}, ${editor.fullName}, ${viewer.fullName}`);
 
-  // 2. Create search profiles
-  console.log('🔍 Creating search profiles...');
-  await db.insert(schema.searchProfiles).values([
-    {
-      userId: userDE.id,
-      name: 'Zürich Zentrum',
-      cities: ['Zürich'],
-      minRooms: 2,
-      maxRooms: 3,
-      minPrice: 1500,
-      maxPrice: 2500,
-    },
-    {
-      userId: userFR.id,
-      name: 'Genève Centre',
-      cities: ['Genève', 'Lausanne'],
-      minRooms: 3,
-      maxRooms: 4,
-      minPrice: 1800,
-      maxPrice: 3000,
-    },
+  // 3. Create org memberships
+  console.log('Creating org memberships...');
+  await db.insert(schema.orgMembers).values([
+    { orgId: org.id, userId: admin.id, role: 'admin' },
+    { orgId: org.id, userId: editor.id, role: 'editor', invitedBy: admin.id },
+    { orgId: org.id, userId: viewer.id, role: 'viewer', invitedBy: admin.id },
   ]);
-  console.log('  ✅ Search profiles created');
+  console.log('  Memberships created (admin, editor, viewer)');
 
-  // 3. Create sample listings
-  console.log('🏠 Creating sample listings...');
-  const [listing1, listing2, listing3] = await db
+  // 4. Create sample listings
+  console.log('Creating sample listings...');
+  const [listing1, listing2] = await db
     .insert(schema.listings)
     .values([
       {
-        externalId: 'flatfox-12345',
-        source: 'flatfox',
-        sourceUrl: 'https://flatfox.ch/de/12345',
-        title: 'Moderne 3.5-Zimmer-Wohnung an zentraler Lage',
-        description:
-          'Schöne, helle Wohnung im Herzen von Zürich. Nahe Hauptbahnhof, ruhige Lage trotz Zentrum. Balkon mit Aussicht. Waschmaschine in der Wohnung.',
-        listingLanguage: 'de',
-        address: 'Bahnhofstrasse 42',
-        city: 'Zürich',
-        postalCode: '8001',
+        orgId: org.id,
+        referenceNumber: 'MI-2026-001',
+        address: 'Seefeldstrasse 42',
+        plz: '8008',
+        city: 'Zuerich',
         canton: 'ZH',
         rooms: '3.5',
-        area: 75,
-        price: 2200,
+        areaSqm: 78,
+        priceChf: 2400,
+        nkChf: 180,
         floor: 3,
-        images: [
-          'https://placehold.co/800x600/FAF7F2/1A1714?text=Wohnzimmer',
-          'https://placehold.co/800x600/FAF7F2/1A1714?text=Küche',
-          'https://placehold.co/800x600/FAF7F2/1A1714?text=Schlafzimmer',
-        ],
-        features: ['Balkon', 'Lift', 'Waschmaschine', 'Geschirrspüler'],
+        status: 'draft',
+        descriptionDe: 'Moderne 3.5-Zimmer-Wohnung im Seefeld mit Balkon und Seesicht.',
+        features: ['Balkon', 'Lift', 'Waschmaschine', 'Geschirrspueler'],
       },
       {
-        externalId: 'homegate-67890',
-        source: 'homegate',
-        sourceUrl: 'https://homegate.ch/mieten/67890',
-        title: 'Charmante 2-Zimmer-Wohnung in Wiedikon',
-        description:
-          'Gemütliche Altbauwohnung mit Charme. Hohe Decken, Parkettboden. Nahe Tram und Einkaufsmöglichkeiten.',
-        listingLanguage: 'de',
-        address: 'Birmensdorferstrasse 108',
-        city: 'Zürich',
-        postalCode: '8003',
+        orgId: org.id,
+        referenceNumber: 'MI-2026-002',
+        address: 'Langstrasse 88',
+        plz: '8004',
+        city: 'Zuerich',
         canton: 'ZH',
         rooms: '2',
-        area: 52,
-        price: 1650,
-        floor: 2,
-        images: [
-          'https://placehold.co/800x600/FAF7F2/1A1714?text=Salon',
-          'https://placehold.co/800x600/FAF7F2/1A1714?text=Chambre',
-        ],
-        features: ['Parkett', 'Altbau', 'Tram-Nähe'],
-      },
-      {
-        externalId: 'flatfox-11111',
-        source: 'flatfox',
-        sourceUrl: 'https://flatfox.ch/fr/11111',
-        title: 'Bel appartement 4 pièces au bord du lac',
-        description:
-          'Magnifique appartement avec vue sur le lac Léman. Cuisine équipée, deux salles de bain. Parking inclus.',
-        listingLanguage: 'fr',
-        address: 'Quai du Mont-Blanc 15',
-        city: 'Genève',
-        postalCode: '1201',
-        canton: 'GE',
-        rooms: '4',
-        area: 95,
-        price: 3200,
-        floor: 5,
-        images: [
-          'https://placehold.co/800x600/FAF7F2/1A1714?text=Vue+Lac',
-          'https://placehold.co/800x600/FAF7F2/1A1714?text=Cuisine',
-        ],
-        features: ['Vue lac', 'Parking', '2 SdB', 'Cuisine équipée'],
+        areaSqm: 48,
+        priceChf: 1450,
+        nkChf: 120,
+        floor: 1,
+        status: 'draft',
+        descriptionDe: 'Gemuetliche 2-Zimmer-Wohnung an zentraler Lage in Kreis 4.',
+        features: ['Parkett', 'Altbau'],
       },
     ])
     .returning();
 
-  console.log(`  ✅ Created ${[listing1, listing2, listing3].length} listings`);
+  console.log(`  Created ${2} listings`);
 
-  // 4. Create sample conversations
-  console.log('💬 Creating sample conversations...');
-  const [conv1] = await db
-    .insert(schema.conversations)
-    .values([
-      {
-        userId: userDE.id,
-        chatType: 'main',
-        title: 'Wohnungssuche Zürich',
-      },
-      {
-        userId: userDE.id,
-        listingId: listing1.id,
-        chatType: 'listing',
-        title: 'Anfrage: Bahnhofstrasse 42',
-      },
-    ])
-    .returning();
-
-  // Add messages to first conversation
-  await db.insert(schema.messages).values([
+  // 5. Create sample applications
+  console.log('Creating sample applications...');
+  await db.insert(schema.applications).values([
     {
-      conversationId: conv1.id,
-      role: 'user',
-      content: 'Ich suche eine 3-Zimmer-Wohnung in Zürich für max. 2500 CHF.',
+      listingId: listing1.id,
+      applicantName: 'Max Schneider',
+      applicantEmail: 'max.schneider@gmail.com',
+      applicantPhone: '+41 79 111 22 33',
+      applicantLanguage: 'de',
+      householdSize: 2,
+      incomeChf: 8500,
+      employmentType: 'unbefristet',
+      status: 'new',
     },
     {
-      conversationId: conv1.id,
-      role: 'assistant',
-      content:
-        "Ich habe 2 passende Wohnungen in Zürich für dich gefunden! Eine moderne 3.5-Zimmer-Wohnung an der Bahnhofstrasse für CHF 2'200 und eine charmante 2-Zimmer-Wohnung in Wiedikon für CHF 1'650. Möchtest du mehr Details?",
+      listingId: listing1.id,
+      applicantName: 'Sophie Blanc',
+      applicantEmail: 'sophie.blanc@outlook.com',
+      applicantLanguage: 'fr',
+      householdSize: 1,
+      incomeChf: 6200,
+      employmentType: 'unbefristet',
+      status: 'new',
+    },
+    {
+      listingId: listing2.id,
+      applicantName: 'Marco Rossi',
+      applicantEmail: 'marco.rossi@mail.ch',
+      applicantLanguage: 'it',
+      householdSize: 1,
+      incomeChf: 5800,
+      employmentType: 'befristet',
+      status: 'new',
     },
   ]);
-  console.log('  ✅ Conversations and messages created');
+  console.log('  Created 3 applications');
 
-  // 5. Create subscriptions
-  console.log('💳 Creating subscriptions...');
-  await db.insert(schema.subscriptions).values([
-    {
-      userId: userDE.id,
-      tier: 'free',
-      status: 'active',
-    },
-    {
-      userId: userFR.id,
-      tier: 'premium',
-      status: 'active',
-    },
-    {
-      userId: userIT.id,
-      tier: 'free',
-      status: 'active',
-    },
-  ]);
-  console.log('  ✅ Subscriptions created');
-
-  console.log('\n✅ Seeding complete! Summary:');
-  console.log('  👤 3 Users (DE, FR, IT)');
-  console.log('  🔍 2 Search Profiles');
-  console.log('  🏠 3 Listings (2 DE, 1 FR)');
-  console.log('  💬 2 Conversations + 2 Messages');
-  console.log('  💳 3 Subscriptions');
-  console.log('\n🎉 Database ready for development!');
+  console.log('\nSeeding complete! Summary:');
+  console.log('  1 Organization (Muster Immobilien AG)');
+  console.log('  3 Users (admin, editor, viewer)');
+  console.log('  3 Org Memberships');
+  console.log('  2 Listings');
+  console.log('  3 Applications');
+  console.log('\nDatabase ready for development!');
 
   await client.end();
 }
 
 seed().catch((err) => {
-  console.error('❌ Seed failed:', err);
+  console.error('Seed failed:', err);
   process.exit(1);
 });

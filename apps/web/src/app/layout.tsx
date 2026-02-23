@@ -1,22 +1,16 @@
 import type { Metadata, Viewport } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Casalino – Dein KI-Wohnungsassistent',
+  title: 'Casalino -- Vermietungsplattform',
   description:
-    'Finde deine Traumwohnung in der Schweiz mit KI-Unterstützung. Mehrsprachig, intelligent, schnell.',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Casalino',
-  },
+    'AI-gestuetztes End-to-End-Vermietungstool fuer Schweizer Immobilienverwaltungen.',
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  themeColor: '#E8503E',
+  themeColor: '#1A1714',
 };
 
 export default function RootLayout({
@@ -24,5 +18,11 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return (
+    <html lang="de" suppressHydrationWarning>
+      <body className="min-h-screen bg-background text-foreground antialiased">
+        {children}
+      </body>
+    </html>
+  );
 }

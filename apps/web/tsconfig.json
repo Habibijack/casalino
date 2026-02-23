@@ -20,7 +20,8 @@
       "@/*": ["./src/*"],
       "@casalino/db": ["../../packages/db/src"],
       "@casalino/shared": ["../../packages/shared/src"],
-      "@casalino/ui": ["../../packages/ui/src"]
+      "@casalino/ui": ["../../packages/ui/src"],
+      "@casalino/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

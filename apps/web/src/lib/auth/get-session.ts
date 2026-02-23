@@ -1,13 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server';
-
-export type SessionUser = {
-  id: string;
-  email: string;
-  fullName: string | null;
-  preferredLanguage: string;
-  avatarUrl: string | null;
-  tier: string;
-};
+import type { SessionUser } from '@casalino/shared';
 
 export async function getSession(): Promise<SessionUser | null> {
   const supabase = await createSupabaseServerClient();
@@ -18,29 +10,34 @@ export async function getSession(): Promise<SessionUser | null> {
   } = await supabase.auth.getUser();
   if (error || !user) return null;
 
-  // Get user profile from our users table
+  // Get user profile
   const { data: profile } = await supabase
     .from('users')
-    .select('id, email, full_name, preferred_language, avatar_url')
+    .select('id, email, full_name, avatar_url')
     .eq('supabase_auth_id', user.id)
     .single();
 
   if (!profile) return null;
 
-  // Get subscription tier
-  const { data: subscription } = await supabase
-    .from('subscriptions')
-    .select('tier')
+  // Get org membership
+  const { data: membership } = await supabase
+    .from('org_members')
+    .select('org_id, role, organizations(name)')
     .eq('user_id', profile.id)
-    .eq('status', 'active')
+    .limit(1)
     .single();
+
+  if (!membership) return null;
+
+  const orgData = membership.organizations as { name: string } | null;
 
   return {
     id: profile.id,
     email: profile.email,
     fullName: profile.full_name,
-    preferredLanguage: profile.preferred_language,
     avatarUrl: profile.avatar_url,
-    tier: subscription?.tier ?? 'free',
+    orgId: membership.org_id,
+    orgRole: membership.role as SessionUser['orgRole'],
+    orgName: orgData?.name ?? 'Unbekannt',
   };
 }

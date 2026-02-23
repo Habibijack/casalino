@@ -33,3 +33,9 @@ supabase/.temp
 
 # credentials
 supabase-zugangsdaten.txt
+
+# redis
+dump.rdb
+
+# build output
+dist/

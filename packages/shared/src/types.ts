@@ -1,44 +1,90 @@
 import { z } from 'zod';
 import {
-  createUserSchema,
-  createSearchProfileSchema,
-  sendMessageSchema,
-  uploadDocumentSchema,
+  createOrganizationSchema,
+  createListingSchema,
+  updateListingSchema,
+  createApplicationSchema,
+  createViewingSchema,
+  createContractSchema,
+  inviteMemberSchema,
+  paginationSchema,
   listingFilterSchema,
+  uploadDocumentSchema,
+  updateListingStatusSchema,
+  updateApplicationStatusSchema,
+  updateViewingStatusSchema,
+  updateContractStatusSchema,
+  updateMemberRoleSchema,
 } from './validators';
 
-// Inferred types from validators
-export type CreateUserInput = z.infer<typeof createUserSchema>;
-export type CreateSearchProfileInput = z.infer<typeof createSearchProfileSchema>;
-export type SendMessageInput = z.infer<typeof sendMessageSchema>;
-export type UploadDocumentInput = z.infer<typeof uploadDocumentSchema>;
+// ---------------------
+// Inferred Input Types
+// ---------------------
+
+export type CreateOrganizationInput = z.infer<typeof createOrganizationSchema>;
+export type CreateListingInput = z.infer<typeof createListingSchema>;
+export type UpdateListingInput = z.infer<typeof updateListingSchema>;
+export type UpdateListingStatusInput = z.infer<typeof updateListingStatusSchema>;
+export type CreateApplicationInput = z.infer<typeof createApplicationSchema>;
+export type UpdateApplicationStatusInput = z.infer<typeof updateApplicationStatusSchema>;
+export type CreateViewingInput = z.infer<typeof createViewingSchema>;
+export type UpdateViewingStatusInput = z.infer<typeof updateViewingStatusSchema>;
+export type CreateContractInput = z.infer<typeof createContractSchema>;
+export type UpdateContractStatusInput = z.infer<typeof updateContractStatusSchema>;
+export type InviteMemberInput = z.infer<typeof inviteMemberSchema>;
+export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>;
+export type PaginationInput = z.infer<typeof paginationSchema>;
 export type ListingFilterInput = z.infer<typeof listingFilterSchema>;
+export type UploadDocumentInput = z.infer<typeof uploadDocumentSchema>;
 
-// API Response types
-export type ApiResponse<T> = {
-  success: true;
-  data: T;
-} | {
-  success: false;
-  error: {
-    code: string;
-    message: string;
-  };
+// ---------------------
+// API Response Types
+// ---------------------
+
+export type ApiResponse<T> =
+  | { success: true; data: T }
+  | { success: false; error: { code: string; message: string } };
+
+export type PaginatedResponse<T> = {
+  items: T[];
+  nextCursor: string | null;
+  totalCount: number;
 };
 
-// Chat types
-export type ChatMessage = {
+// ---------------------
+// Session Types
+// ---------------------
+
+export type SessionUser = {
   id: string;
-  role: 'user' | 'assistant' | 'system';
-  content: string;
-  createdAt: string;
+  email: string;
+  fullName: string | null;
+  avatarUrl: string | null;
+  orgId: string;
+  orgRole: 'admin' | 'editor' | 'viewer';
+  orgName: string;
 };
 
-export type Conversation = {
-  id: string;
-  chatType: 'main' | 'listing';
-  listingId?: string;
-  title?: string;
-  messages: ChatMessage[];
-  createdAt: string;
+// ---------------------
+// Dashboard Stats
+// ---------------------
+
+export type DashboardStats = {
+  activeListings: number;
+  openApplications: number;
+  upcomingViewings: number;
+  pendingContracts: number;
+};
+
+// ---------------------
+// Scoring
+// ---------------------
+
+export type ScoreBreakdown = {
+  financial: number;
+  dossier: number;
+  matching: number;
+  communication: number;
+  credit: number;
+  total: number;
 };

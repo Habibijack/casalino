@@ -1,48 +1,94 @@
 @import "tailwindcss";
 
 /* ========================================
-   CASALINO DESIGN TOKENS
-   Tailwind CSS v4 – CSS-first Configuration
+   CASALINO B2B DESIGN TOKENS
+   Tailwind CSS v4 -- CSS-first Configuration
+   Desktop-first with Dark Mode support
    ======================================== */
 
 @theme {
-  /* Colors */
-  --color-primary: #E8503E;
-  --color-primary-hover: #D4453A;
-  --color-primary-light: #FDF2F1;
+  /* Brand Colors */
+  --color-primary: #1A1714;
+  --color-primary-foreground: #FAFAF8;
 
-  --color-background: #FAF7F2;
-  --color-card: #FFFFFF;
-  --color-border: #E8E4DE;
+  --color-accent: #E8503E;
+  --color-accent-foreground: #FFFFFF;
+  --color-accent-hover: #D4472F;
+  --color-accent-light: #FDF0EE;
 
+  /* UI Colors - Light Mode */
+  --color-background: #FAFAF8;
   --color-foreground: #1A1714;
-  --color-muted-foreground: #8A857D;
 
-  --color-success: #2D8B5F;
-  --color-success-light: #F0FAF5;
-  --color-info: #3B6DE0;
-  --color-info-light: #F0F4FD;
-  --color-warning: #D4A017;
-  --color-warning-light: #FDF8EC;
+  --color-card: #FFFFFF;
+  --color-card-foreground: #1A1714;
+
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #1A1714;
+
+  --color-muted: #F5F5F3;
+  --color-muted-foreground: #737373;
+
+  --color-border: #E5E5E5;
+  --color-input: #E5E5E5;
+  --color-ring: #1A1714;
+
+  /* Sidebar */
+  --color-sidebar: #1A1714;
+  --color-sidebar-foreground: #FAFAF8;
+  --color-sidebar-accent: #292524;
+  --color-sidebar-muted: #A3A3A3;
+
+  /* Semantic Colors */
+  --color-success: #16A34A;
+  --color-success-light: #F0FDF4;
+  --color-info: #2563EB;
+  --color-info-light: #EFF6FF;
+  --color-warning: #CA8A04;
+  --color-warning-light: #FEFCE8;
   --color-destructive: #DC2626;
+  --color-destructive-light: #FEF2F2;
 
   /* Fonts */
-  --font-heading: 'Instrument Serif', Georgia, serif;
-  --font-body: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
   /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --radius-xl: 20px;
-  --radius-full: 100px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+
+  /* Layout */
+  --sidebar-width: 220px;
+  --header-height: 64px;
+}
+
+/* Dark Mode Overrides */
+.dark {
+  --color-background: #09090B;
+  --color-foreground: #FAFAF8;
+  --color-card: #1C1917;
+  --color-card-foreground: #FAFAF8;
+  --color-popover: #1C1917;
+  --color-popover-foreground: #FAFAF8;
+  --color-primary: #FAFAF8;
+  --color-primary-foreground: #09090B;
+  --color-muted: #292524;
+  --color-muted-foreground: #A3A3A3;
+  --color-border: #292524;
+  --color-input: #292524;
+  --color-ring: #FAFAF8;
+  --color-sidebar: #09090B;
+  --color-sidebar-foreground: #FAFAF8;
+  --color-sidebar-accent: #1C1917;
 }
 
 /* Base Styles */
@@ -50,24 +96,36 @@ body {
   font-family: var(--font-body);
   background-color: var(--color-background);
   color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
+  font-weight: 600;
 }
 
-/* Touch Target Minimum: 44px */
-button, a, [role="button"] {
-  min-height: 44px;
-}
-
-/* Focus Styles for Accessibility */
+/* Focus Styles */
 :focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--color-ring);
   outline-offset: 2px;
 }
 
-/* Safe area for bottom navigation (iPhone notch) */
-.safe-area-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-muted-foreground);
 }
