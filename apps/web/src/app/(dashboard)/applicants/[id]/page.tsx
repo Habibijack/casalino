@@ -16,6 +16,7 @@ import { APPLICATION_STATUSES, SCORE_THRESHOLDS } from '@casalino/shared';
 import { createApiClient } from '@/lib/api/client';
 import { getAccessToken } from '@/lib/api/get-access-token';
 import { ApplicantStatusActions } from './status-actions';
+import { ReferenceSection } from '@/components/applications/ReferenceSection';
 
 const STATUS_VARIANT_MAP: Record<string, 'info' | 'warning' | 'success' | 'destructive' | 'accent'> = {
   new: 'info',
@@ -172,6 +173,9 @@ export default async function ApplicantDetailPage(
               </CardContent>
             </Card>
           )}
+
+          {/* Landlord Reference */}
+          <ReferenceSection applicationId={id} accessToken={token} />
         </TabsContent>
 
         <TabsContent value="score" className="mt-4">

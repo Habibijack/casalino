@@ -1,7 +1,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createApiClient, type ApplicationRow } from '@/lib/api/client';
+import {
+  createApiClient,
+  type ApplicationRow,
+  type ReferenceCheckRow,
+} from '@/lib/api/client';
 import { getAccessToken } from '@/lib/api/get-access-token';
 
 type ActionResult<T = unknown> =
@@ -28,6 +32,38 @@ export async function updateApplicationStatusAction(
     return { success: true, data: application };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Fehler beim Statuswechsel';
+    return { success: false, error: message };
+  }
+}
+
+export async function requestReferenceAction(data: {
+  applicationId: string;
+  landlordName: string;
+  landlordEmail: string;
+}): Promise<ActionResult<ReferenceCheckRow>> {
+  try {
+    const client = await getClient();
+    const reference = await client.references.create(data);
+    revalidatePath(`/applicants/${data.applicationId}`);
+    return { success: true, data: reference };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : 'Fehler beim Anfragen der Referenz';
+    return { success: false, error: message };
+  }
+}
+
+export async function sendReferenceReminderAction(
+  referenceCheckId: string,
+): Promise<ActionResult<ReferenceCheckRow>> {
+  try {
+    const client = await getClient();
+    const reference = await client.references.remind(referenceCheckId);
+    revalidatePath('/applicants');
+    return { success: true, data: reference };
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : 'Fehler beim Senden der Erinnerung';
     return { success: false, error: message };
   }
 }

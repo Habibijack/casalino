@@ -92,6 +92,8 @@ export const createApplicationSchema = z.object({
   petType: z.string().max(50).optional(),
   desiredMoveDate: z.string().optional(),
   coverLetter: z.string().max(5000).optional(),
+  landlordName: z.string().max(255).optional(),
+  landlordEmail: z.string().email().optional(),
   hasSwissResidence: z.boolean().default(true),
   consent: z.boolean().refine((val) => val === true, {
     message: 'Einwilligung ist erforderlich',
@@ -186,6 +188,25 @@ export const updateOrganizationSchema = z.object({
     communication: z.number().min(0).max(100),
     credit: z.number().min(0).max(100),
   }).optional(),
+});
+
+// ---------------------
+// Reference Checks
+// ---------------------
+
+export const createReferenceCheckSchema = z.object({
+  applicationId: z.string().uuid(),
+  landlordName: z.string().min(2).max(255),
+  landlordEmail: z.string().email(),
+});
+
+export const submitReferenceSchema = z.object({
+  paymentPunctuality: z.number().min(1).max(5),
+  propertyCondition: z.number().min(1).max(5),
+  neighborBehavior: z.number().min(1).max(5),
+  houseRulesCompliance: z.number().min(1).max(5),
+  wouldRentAgain: z.boolean(),
+  comment: z.string().max(2000).optional(),
 });
 
 // ---------------------

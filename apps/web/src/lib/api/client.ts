@@ -303,6 +303,34 @@ export function createApiClient(token: string) {
         return apiFetch<TrendDataPoint[]>('/insights/trend', { token });
       },
     },
+
+    references: {
+      getForApplication(applicationId: string) {
+        return apiFetch<ReferenceCheckRow>(
+          `/applications/${applicationId}/reference`,
+          { token },
+        );
+      },
+
+      create(data: {
+        applicationId: string;
+        landlordName: string;
+        landlordEmail: string;
+      }) {
+        return apiFetch<ReferenceCheckRow>('/reference-checks', {
+          method: 'POST',
+          body: data,
+          token,
+        });
+      },
+
+      remind(id: string) {
+        return apiFetch<ReferenceCheckRow>(
+          `/reference-checks/${id}/remind`,
+          { method: 'POST', token },
+        );
+      },
+    },
   };
 }
 
@@ -517,4 +545,26 @@ export interface PriceSuggestionRow {
   suggestedMax: number;
   pricePerSqm: number;
   basis: string;
+}
+
+export interface ReferenceCheckRow {
+  id: string;
+  applicationId: string;
+  landlordName: string;
+  landlordEmail: string;
+  status: string;
+  responses: {
+    paymentPunctuality: number;
+    propertyCondition: number;
+    neighborBehavior: number;
+    houseRulesCompliance: number;
+    wouldRentAgain: boolean;
+    comment?: string;
+  } | null;
+  scoreImpact: number | null;
+  sentAt: string | null;
+  completedAt: string | null;
+  expiresAt: string | null;
+  remindedAt: string | null;
+  createdAt: string;
 }

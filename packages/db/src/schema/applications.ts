@@ -6,6 +6,7 @@ import { creditChecks } from './credit-checks';
 import { viewings } from './viewings';
 import { communications } from './communications';
 import { contracts } from './contracts';
+import { referenceChecks } from './reference-checks';
 
 export const applications = pgTable('applications', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -21,6 +22,8 @@ export const applications = pgTable('applications', {
   petType: text('pet_type'),
   desiredMoveDate: date('desired_move_date'),
   coverLetter: text('cover_letter'),
+  landlordName: text('landlord_name'),
+  landlordEmail: text('landlord_email'),
   hasSwissResidence: boolean('has_swiss_residence').notNull().default(true),
   // Scoring
   scoreTotal: integer('score_total'),
@@ -54,4 +57,5 @@ export const applicationsRelations = relations(applications, ({ one, many }) => 
   viewings: many(viewings),
   communications: many(communications),
   contracts: many(contracts),
+  referenceChecks: many(referenceChecks),
 }));

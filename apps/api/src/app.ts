@@ -20,6 +20,7 @@ import { insightsRouter } from './routes/insights';
 import { documentsRouter } from './routes/documents';
 import { onboardingRouter } from './routes/onboarding';
 import { gdprRouter } from './routes/gdpr';
+import { referenceChecksRouter, publicReferenceRouter } from './routes/reference-checks';
 
 const app = new Hono<AppEnv>();
 
@@ -64,6 +65,7 @@ publicApi.route('/applications', publicApplicationsRouter);
 publicApi.route('/listings', publicListingsRouter);
 publicApi.route('/contracts', publicContractsRouter);
 publicApi.route('/viewings', publicViewingsRouter);
+publicApi.route('/reference', publicReferenceRouter);
 app.route('/api/v1/public', publicApi);
 
 // Webhooks (high limit, no auth)
@@ -102,6 +104,7 @@ protectedApi.route('/billing', billingRouter);
 protectedApi.route('/insights', insightsRouter);
 protectedApi.route('/documents', documentsRouter);
 protectedApi.route('/gdpr', gdprRouter);
+protectedApi.route('/reference-checks', referenceChecksRouter);
 
 app.route('/api/v1', protectedApi);
 

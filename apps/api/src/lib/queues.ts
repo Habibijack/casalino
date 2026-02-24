@@ -15,3 +15,5 @@ export const emailQueue = new Queue('email', { connection });
 export const creditCheckQueue = new Queue('credit-check', { connection });
 
 export const reminderQueue = new Queue('reminder', { connection });
+
+export const referenceQueue = new Queue('reference', { connection });

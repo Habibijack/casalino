@@ -7,6 +7,7 @@ import {
   sendViewingInvitationEmail,
   sendContractReadyEmail,
   sendMemberInvitationEmail,
+  sendReferenceRequestEmail,
 } from '@casalino/email';
 import { getDb } from '../lib/db';
 import { APP_URL } from '@casalino/shared';
@@ -62,12 +63,21 @@ interface MemberInvitationData extends BaseEmailJobData {
   role: string;
 }
 
+interface ReferenceRequestData extends BaseEmailJobData {
+  type: 'reference-request';
+  to: string;
+  landlordName: string;
+  applicantName: string;
+  token: string;
+}
+
 type EmailJobData =
   | ApplicationReceivedData
   | RejectionData
   | ViewingInvitationData
   | ContractReadyData
-  | MemberInvitationData;
+  | MemberInvitationData
+  | ReferenceRequestData;
 
 export async function processEmailJob(job: Job<EmailJobData>) {
   const data = job.data;
@@ -87,6 +97,9 @@ export async function processEmailJob(job: Job<EmailJobData>) {
       break;
     case 'member-invitation':
       await handleMemberInvitation(data);
+      break;
+    case 'reference-request':
+      await handleReferenceRequest(data);
       break;
     default:
       console.warn(`[email] Unknown email type: ${(data as BaseEmailJobData).type}`);
@@ -201,4 +214,22 @@ async function handleMemberInvitation(data: MemberInvitationData) {
   });
 
   console.log(`[email] Member invitation sent to ${data.to}`);
+}
+
+async function handleReferenceRequest(data: ReferenceRequestData) {
+  if (!data.to) {
+    console.warn('[email] No landlord email for reference request, skipping');
+    return;
+  }
+
+  const referenceUrl = `${APP_URL}/reference/${data.token}`;
+
+  await sendReferenceRequestEmail({
+    to: data.to,
+    landlordName: data.landlordName,
+    applicantName: data.applicantName,
+    referenceUrl,
+  });
+
+  console.log(`[email] Reference request sent to ${data.to}`);
 }

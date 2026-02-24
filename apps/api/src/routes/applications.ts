@@ -11,6 +11,7 @@ import {
   createApplication,
   updateApplicationStatus,
 } from '../services/applications.service';
+import { getByApplicationId } from '../services/reference.service';
 import { AppError } from '../lib/errors';
 import { requireRole } from '../lib/query-helpers';
 
@@ -63,6 +64,13 @@ export const applicationsRouter = new Hono<AppEnv>()
 
     const application = await updateApplicationStatus(orgId, userId, id, parsed.data);
     return c.json({ success: true, data: application });
+  })
+
+  .get('/:id/reference', async (c) => {
+    const orgId = c.get('orgId');
+    const id = c.req.param('id');
+    const refCheck = await getByApplicationId(orgId, id);
+    return c.json({ success: true, data: refCheck });
   });
 
 // ---------------------

@@ -169,6 +169,8 @@ export async function createApplication(input: CreateApplicationInput) {
       petType: input.petType ?? null,
       desiredMoveDate: input.desiredMoveDate ?? null,
       coverLetter: input.coverLetter ?? null,
+      landlordName: input.landlordName ?? null,
+      landlordEmail: input.landlordEmail ?? null,
       hasSwissResidence: input.hasSwissResidence,
       consentAt: input.consent ? new Date() : null,
       status: 'new',
