@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { ArrowLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Datenschutzerklaerung -- Casalino',
-  description: 'Datenschutzerklaerung der Casalino Vermietungsplattform gemaess nDSG.',
+  title: 'Datenschutz',
+  description: 'Datenschutzerklaerung der Casalino Vermietungsplattform gemaess Schweizer nDSG.',
+  robots: { index: true, follow: true },
 };
 
 export default function DatenschutzPage() {

@@ -1,5 +1,8 @@
-import { Card, CardContent, Badge } from '@casalino/ui';
+import { cookies } from 'next/headers';
+import { Card, CardContent } from '@casalino/ui';
 import { ApplicationForm } from '@/components/applications/ApplicationForm';
+import { getTranslations, type Locale } from '@/lib/i18n';
+import { detectLocale, LOCALE_COOKIE_NAME } from '@/lib/i18n/detect-locale';
 
 interface PublicListingInfo {
   id: string;
@@ -23,10 +26,29 @@ function formatPrice(chf: number): string {
   }).format(chf);
 }
 
+function getRoomsLabel(rooms: string, locale: Locale): string {
+  const labels: Record<Locale, string> = {
+    de: 'Zimmer',
+    fr: 'pieces',
+    it: 'locali',
+  };
+  return `${rooms} ${labels[locale]}`;
+}
+
 export default async function ApplyPage(
-  props: { params: Promise<{ listingId: string }> },
+  props: {
+    params: Promise<{ listingId: string }>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  },
 ) {
   const { listingId } = await props.params;
+  const searchParams = await props.searchParams;
+  const cookieStore = await cookies();
+  const cookieValue = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+  const locale = detectLocale(searchParams, cookieValue);
+  const t = await getTranslations(locale, 'apply');
+  const tc = await getTranslations(locale, 'common');
+
   const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
   const res = await fetch(`${API_BASE}/api/v1/public/listings/${listingId}`, {
@@ -37,7 +59,7 @@ export default async function ApplyPage(
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
-          Dieses Inserat wurde nicht gefunden oder ist nicht mehr verfuegbar.
+          {t('notFound')}
         </CardContent>
       </Card>
     );
@@ -50,7 +72,7 @@ export default async function ApplyPage(
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
-          Dieses Inserat nimmt derzeit keine Bewerbungen an.
+          {t('notAccepting')}
         </CardContent>
       </Card>
     );
@@ -59,17 +81,16 @@ export default async function ApplyPage(
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-heading text-3xl">Bewerbung einreichen</h1>
+        <h1 className="font-heading text-3xl">{t('title')}</h1>
         <p className="mt-1 text-muted-foreground">
-          fuer {listing.address}, {listing.plz} {listing.city}
+          {t('forAddress')} {listing.address}, {listing.plz} {listing.city}
         </p>
       </div>
 
-      {/* Listing Summary */}
       <Card>
         <CardContent className="flex items-center justify-between py-4">
           <div>
-            <p className="font-medium">{listing.rooms} Zimmer</p>
+            <p className="font-medium">{getRoomsLabel(listing.rooms, locale)}</p>
             <p className="text-sm text-muted-foreground">
               {listing.plz} {listing.city}
               {listing.canton && ` (${listing.canton})`}
@@ -79,7 +100,7 @@ export default async function ApplyPage(
             <p className="text-lg font-bold">{formatPrice(listing.priceChf)}</p>
             {listing.nkChf && (
               <p className="text-xs text-muted-foreground">
-                + {formatPrice(listing.nkChf)} NK
+                + {formatPrice(listing.nkChf)} {tc('additionalCosts')}
               </p>
             )}
           </div>
@@ -90,6 +111,7 @@ export default async function ApplyPage(
         listingId={listingId}
         listingAddress={listing.address}
         listingCity={listing.city}
+        locale={locale}
       />
     </div>
   );

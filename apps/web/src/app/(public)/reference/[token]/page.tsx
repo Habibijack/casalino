@@ -1,5 +1,8 @@
+import { cookies } from 'next/headers';
 import { Card, CardContent } from '@casalino/ui';
 import { ReferenceForm } from './client';
+import { getTranslations, type Locale } from '@/lib/i18n';
+import { detectLocale, LOCALE_COOKIE_NAME } from '@/lib/i18n/detect-locale';
 
 interface ReferencePublicData {
   id: string;
@@ -10,9 +13,18 @@ interface ReferencePublicData {
 }
 
 export default async function ReferenceFormPage(
-  props: { params: Promise<{ token: string }> },
+  props: {
+    params: Promise<{ token: string }>;
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  },
 ) {
   const { token } = await props.params;
+  const searchParams = await props.searchParams;
+  const cookieStore = await cookies();
+  const cookieValue = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+  const locale: Locale = detectLocale(searchParams, cookieValue);
+  const t = await getTranslations(locale, 'reference');
+
   const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
 
   let data: ReferencePublicData | null = null;
@@ -28,18 +40,18 @@ export default async function ReferenceFormPage(
     if (json.success) {
       data = json.data;
     } else {
-      errorMessage = json.error?.message ?? 'Referenz nicht gefunden';
+      errorMessage = json.error?.message ?? t('notFound');
     }
   } catch {
-    errorMessage = 'Verbindungsfehler';
+    errorMessage = t('connectionError');
   }
 
   if (errorMessage || !data) {
     return (
-      <Card className="max-w-md mx-auto">
+      <Card className="mx-auto max-w-md">
         <CardContent className="py-12 text-center">
           <p className="text-destructive">
-            {errorMessage ?? 'Referenz nicht gefunden'}
+            {errorMessage ?? t('notFound')}
           </p>
         </CardContent>
       </Card>
@@ -48,13 +60,13 @@ export default async function ReferenceFormPage(
 
   if (data.status === 'completed') {
     return (
-      <Card className="max-w-md mx-auto">
+      <Card className="mx-auto max-w-md">
         <CardContent className="py-12 text-center">
           <h2 className="mb-2 text-xl font-bold">
-            Bereits ausgefuellt
+            {t('alreadyCompletedTitle')}
           </h2>
           <p className="text-muted-foreground">
-            Diese Referenz wurde bereits eingereicht. Vielen Dank.
+            {t('alreadyCompletedMessage')}
           </p>
         </CardContent>
       </Card>
@@ -63,14 +75,13 @@ export default async function ReferenceFormPage(
 
   if (data.status === 'expired') {
     return (
-      <Card className="max-w-md mx-auto">
+      <Card className="mx-auto max-w-md">
         <CardContent className="py-12 text-center">
           <h2 className="mb-2 text-xl font-bold">
-            Link abgelaufen
+            {t('expiredTitle')}
           </h2>
           <p className="text-muted-foreground">
-            Dieser Referenzlink ist leider abgelaufen.
-            Bitte kontaktieren Sie die Verwaltung fuer einen neuen Link.
+            {t('expiredMessage')}
           </p>
         </CardContent>
       </Card>
@@ -80,13 +91,17 @@ export default async function ReferenceFormPage(
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="font-heading text-3xl">Vermieter-Referenz</h1>
+        <h1 className="font-heading text-3xl">{t('title')}</h1>
         <p className="mt-2 text-muted-foreground">
-          Referenz fuer {data.applicantName}
+          {t('referenceFor')} {data.applicantName}
         </p>
       </div>
 
-      <ReferenceForm token={token} applicantName={data.applicantName} />
+      <ReferenceForm
+        token={token}
+        applicantName={data.applicantName}
+        locale={locale}
+      />
     </div>
   );
 }

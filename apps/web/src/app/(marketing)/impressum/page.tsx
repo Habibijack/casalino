@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { ArrowLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'Impressum -- Casalino',
-  description: 'Impressum der Casalino Vermietungsplattform.',
+  title: 'Impressum',
+  description: 'Impressum der Casalino Vermietungsplattform – SwissCreo GmbH, Schweiz.',
+  robots: { index: true, follow: true },
 };
 
 export default function ImpressumPage() {

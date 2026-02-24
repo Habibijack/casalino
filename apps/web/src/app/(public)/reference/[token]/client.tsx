@@ -12,38 +12,38 @@ import {
   Separator,
 } from '@casalino/ui';
 import { publicApiFetch } from '@/lib/api/client';
+import { type Locale, DEFAULT_LOCALE } from '@/lib/i18n';
+import { referenceDictionary } from '@/lib/i18n/dictionaries/reference';
 
 interface ReferenceFormProps {
   token: string;
   applicantName: string;
+  locale?: Locale;
 }
 
 interface RatingQuestionProps {
   label: string;
   value: number;
   onChange: (value: number) => void;
+  starLabel: string;
 }
 
-const RATING_QUESTIONS = [
-  {
-    key: 'paymentPunctuality',
-    label: 'Wie puenktlich wurden Mietzahlungen geleistet?',
-  },
-  {
-    key: 'propertyCondition',
-    label: 'In welchem Zustand wurde die Wohnung hinterlassen?',
-  },
-  {
-    key: 'neighborBehavior',
-    label: 'Wie war das Verhalten gegenueber Nachbarn?',
-  },
-  {
-    key: 'houseRulesCompliance',
-    label: 'Wie gut wurde die Hausordnung eingehalten?',
-  },
-] as const;
+function useRefTranslation(locale: Locale): (key: string) => string {
+  const dict = referenceDictionary[locale] ?? referenceDictionary[DEFAULT_LOCALE];
+  const fallback = referenceDictionary[DEFAULT_LOCALE];
+  return (key: string) => dict[key] ?? fallback[key] ?? key;
+}
 
-function RatingQuestion({ label, value, onChange }: RatingQuestionProps) {
+function getRatingQuestions(t: (key: string) => string) {
+  return [
+    { key: 'paymentPunctuality', label: t('paymentPunctuality') },
+    { key: 'propertyCondition', label: t('propertyCondition') },
+    { key: 'neighborBehavior', label: t('neighborBehavior') },
+    { key: 'houseRulesCompliance', label: t('houseRulesCompliance') },
+  ];
+}
+
+function RatingQuestion({ label, value, onChange, starLabel }: RatingQuestionProps) {
   const [hovered, setHovered] = useState(0);
 
   return (
@@ -60,7 +60,7 @@ function RatingQuestion({ label, value, onChange }: RatingQuestionProps) {
               onMouseEnter={() => setHovered(star)}
               onMouseLeave={() => setHovered(0)}
               onClick={() => onChange(star)}
-              aria-label={`${star} von 5 Sternen`}
+              aria-label={starLabel.replace('{n}', String(star))}
             >
               <Star
                 className={`h-6 w-6 ${
@@ -77,7 +77,14 @@ function RatingQuestion({ label, value, onChange }: RatingQuestionProps) {
   );
 }
 
-export function ReferenceForm({ token, applicantName }: ReferenceFormProps) {
+export function ReferenceForm({
+  token,
+  applicantName,
+  locale = DEFAULT_LOCALE,
+}: ReferenceFormProps) {
+  const t = useRefTranslation(locale);
+  const ratingQuestions = getRatingQuestions(t);
+
   const [ratings, setRatings] = useState<Record<string, number>>({
     paymentPunctuality: 0,
     propertyCondition: 0,
@@ -121,7 +128,7 @@ export function ReferenceForm({ token, applicantName }: ReferenceFormProps) {
       setSubmitted(true);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message : 'Fehler beim Senden';
+        err instanceof Error ? err.message : t('submitError');
       setError(message);
     } finally {
       setSubmitting(false);
@@ -134,11 +141,10 @@ export function ReferenceForm({ token, applicantName }: ReferenceFormProps) {
         <CardContent className="py-12 text-center">
           <Check className="mx-auto mb-4 h-12 w-12 text-success" />
           <h2 className="mb-2 text-2xl font-bold text-success">
-            Vielen Dank fuer Ihre Rueckmeldung.
+            {t('successTitle')}
           </h2>
           <p className="text-muted-foreground">
-            Ihre Referenz fuer {applicantName} wurde erfolgreich
-            eingereicht.
+            {t('successMessage').replace('{name}', applicantName)}
           </p>
         </CardContent>
       </Card>
@@ -149,26 +155,24 @@ export function ReferenceForm({ token, applicantName }: ReferenceFormProps) {
     <Card>
       <CardHeader>
         <CardTitle className="text-lg">
-          Referenz fuer {applicantName}
+          {t('referenceFor')} {applicantName}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {RATING_QUESTIONS.map((q) => (
+        {ratingQuestions.map((q) => (
           <RatingQuestion
             key={q.key}
             label={q.label}
             value={ratings[q.key]}
             onChange={(val) => handleRatingChange(q.key, val)}
+            starLabel={t('starLabel')}
           />
         ))}
 
         <Separator />
 
-        {/* Would rent again */}
         <div className="space-y-2">
-          <p className="text-sm font-medium">
-            Wuerden Sie an diese Person erneut vermieten?
-          </p>
+          <p className="text-sm font-medium">{t('wouldRentAgain')}</p>
           <div className="flex gap-3">
             <Button
               type="button"
@@ -176,7 +180,7 @@ export function ReferenceForm({ token, applicantName }: ReferenceFormProps) {
               size="sm"
               onClick={() => setWouldRentAgain(true)}
             >
-              Ja
+              {locale === 'fr' ? 'Oui' : locale === 'it' ? 'Si' : 'Ja'}
             </Button>
             <Button
               type="button"
@@ -184,20 +188,17 @@ export function ReferenceForm({ token, applicantName }: ReferenceFormProps) {
               size="sm"
               onClick={() => setWouldRentAgain(false)}
             >
-              Nein
+              {locale === 'fr' ? 'Non' : locale === 'it' ? 'No' : 'Nein'}
             </Button>
           </div>
         </div>
 
         <Separator />
 
-        {/* Optional comment */}
         <div className="space-y-2">
-          <p className="text-sm font-medium">
-            Kommentar (optional)
-          </p>
+          <p className="text-sm font-medium">{t('comment')}</p>
           <Textarea
-            placeholder="Weitere Anmerkungen..."
+            placeholder={t('commentPlaceholder')}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             rows={4}
@@ -214,7 +215,7 @@ export function ReferenceForm({ token, applicantName }: ReferenceFormProps) {
           className="w-full"
           size="lg"
         >
-          {submitting ? 'Wird gesendet...' : 'Referenz absenden'}
+          {submitting ? t('submitting') : t('submitButton')}
         </Button>
       </CardContent>
     </Card>

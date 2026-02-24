@@ -2,7 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Button,
   Card,
@@ -19,6 +19,8 @@ import {
   SelectValue,
 } from '@casalino/ui';
 import { createApplicationSchema } from '@casalino/shared';
+import { type Locale, DEFAULT_LOCALE } from '@/lib/i18n';
+import { applyDictionary } from '@/lib/i18n/dictionaries/apply';
 
 type AppLanguage = 'de' | 'fr' | 'it' | 'en';
 
@@ -30,13 +32,22 @@ interface ApplicationFormProps {
   listingId: string;
   listingAddress: string;
   listingCity: string;
+  locale?: Locale;
+}
+
+function useApplyTranslation(locale: Locale): (key: string) => string {
+  const dict = applyDictionary[locale] ?? applyDictionary[DEFAULT_LOCALE];
+  const fallback = applyDictionary[DEFAULT_LOCALE];
+  return (key: string) => dict[key] ?? fallback[key] ?? key;
 }
 
 export function ApplicationForm({
   listingId,
   listingAddress,
   listingCity,
+  locale = DEFAULT_LOCALE,
 }: ApplicationFormProps) {
+  const t = useApplyTranslation(locale);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -51,11 +62,15 @@ export function ApplicationForm({
     resolver: zodResolver(createApplicationSchema),
     defaultValues: {
       listingId,
-      applicantLanguage: 'de',
+      applicantLanguage: locale,
       hasPets: false,
       hasSwissResidence: true,
     },
   });
+
+  useEffect(() => {
+    setValue('applicantLanguage', locale);
+  }, [locale, setValue]);
 
   const language = watch('applicantLanguage');
 
@@ -63,7 +78,8 @@ export function ApplicationForm({
     setSubmitting(true);
     setError(null);
     try {
-      const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
+      const API_BASE =
+        process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000';
       const res = await fetch(`${API_BASE}/api/v1/public/applications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,13 +87,13 @@ export function ApplicationForm({
       });
       const json = await res.json();
       if (!json.success) {
-        setError(json.error?.message ?? 'Fehler beim Einreichen');
+        setError(json.error?.message ?? t('submitError'));
         setSubmitting(false);
         return;
       }
       setSubmitted(true);
     } catch {
-      setError('Verbindungsfehler. Bitte versuchen Sie es spaeter erneut.');
+      setError(t('connectionError'));
       setSubmitting(false);
     }
   }
@@ -86,10 +102,12 @@ export function ApplicationForm({
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <h2 className="mb-2 text-2xl font-bold text-success">Bewerbung eingereicht!</h2>
+          <h2 className="mb-2 text-2xl font-bold text-success">
+            {t('successTitle')}
+          </h2>
           <p className="text-muted-foreground">
-            Vielen Dank fuer Ihre Bewerbung fuer {listingAddress}, {listingCity}.
-            Die Verwaltung wird sich bei Ihnen melden.
+            {t('successMessage')} {listingAddress}, {listingCity}.{' '}
+            {t('successNote')}
           </p>
         </CardContent>
       </Card>
@@ -102,46 +120,49 @@ export function ApplicationForm({
 
       {error && (
         <Card className="border-destructive">
-          <CardContent className="py-4 text-sm text-destructive">{error}</CardContent>
+          <CardContent className="py-4 text-sm text-destructive">
+            {error}
+          </CardContent>
         </Card>
       )}
 
-      {/* Personal Info */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Persoenliche Angaben</CardTitle>
+          <CardTitle className="text-lg">{t('personalInfo')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
-            <Label htmlFor="applicantName">Vollstaendiger Name *</Label>
+            <Label htmlFor="applicantName">{t('fullName')} *</Label>
             <Input
               id="applicantName"
               {...register('applicantName')}
-              placeholder="Max Mustermann"
+              placeholder={t('fullNamePlaceholder')}
             />
             {errors.applicantName && (
-              <p className="mt-1 text-sm text-destructive">{String(errors.applicantName.message ?? '')}</p>
+              <p className="mt-1 text-sm text-destructive">
+                {String(errors.applicantName.message ?? '')}
+              </p>
             )}
           </div>
           <div>
-            <Label htmlFor="applicantEmail">E-Mail</Label>
+            <Label htmlFor="applicantEmail">{t('email')}</Label>
             <Input
               id="applicantEmail"
               type="email"
               {...register('applicantEmail')}
-              placeholder="max@example.com"
+              placeholder={t('emailPlaceholder')}
             />
           </div>
           <div>
-            <Label htmlFor="applicantPhone">Telefon</Label>
+            <Label htmlFor="applicantPhone">{t('phone')}</Label>
             <Input
               id="applicantPhone"
               {...register('applicantPhone')}
-              placeholder="+41 79 123 45 67"
+              placeholder={t('phonePlaceholder')}
             />
           </div>
           <div>
-            <Label htmlFor="applicantLanguage">Sprache</Label>
+            <Label htmlFor="applicantLanguage">{t('language')}</Label>
             <Select
               value={language ?? 'de'}
               onValueChange={(v) => {
@@ -154,24 +175,23 @@ export function ApplicationForm({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="de">Deutsch</SelectItem>
-                <SelectItem value="fr">Franzoesisch</SelectItem>
-                <SelectItem value="it">Italienisch</SelectItem>
-                <SelectItem value="en">Englisch</SelectItem>
+                <SelectItem value="de">{t('langDe')}</SelectItem>
+                <SelectItem value="fr">{t('langFr')}</SelectItem>
+                <SelectItem value="it">{t('langIt')}</SelectItem>
+                <SelectItem value="en">{t('langEn')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Household */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Haushalt & Finanzen</CardTitle>
+          <CardTitle className="text-lg">{t('household')}</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
           <div>
-            <Label htmlFor="householdSize">Haushaltgroesse</Label>
+            <Label htmlFor="householdSize">{t('householdSize')}</Label>
             <Input
               id="householdSize"
               type="number"
@@ -181,7 +201,7 @@ export function ApplicationForm({
             />
           </div>
           <div>
-            <Label htmlFor="incomeChf">Monatliches Einkommen CHF</Label>
+            <Label htmlFor="incomeChf">{t('income')}</Label>
             <Input
               id="incomeChf"
               type="number"
@@ -190,15 +210,15 @@ export function ApplicationForm({
             />
           </div>
           <div>
-            <Label htmlFor="employmentType">Beschaeftigungsart</Label>
+            <Label htmlFor="employmentType">{t('employmentType')}</Label>
             <Input
               id="employmentType"
               {...register('employmentType')}
-              placeholder="Festanstellung"
+              placeholder={t('employmentPlaceholder')}
             />
           </div>
           <div>
-            <Label htmlFor="desiredMoveDate">Gewuenschtes Einzugsdatum</Label>
+            <Label htmlFor="desiredMoveDate">{t('moveDate')}</Label>
             <Input
               id="desiredMoveDate"
               type="date"
@@ -212,7 +232,7 @@ export function ApplicationForm({
               {...register('hasSwissResidence')}
               className="h-4 w-4"
             />
-            <Label htmlFor="hasSwissResidence">Wohnsitz in der Schweiz</Label>
+            <Label htmlFor="hasSwissResidence">{t('swissResidence')}</Label>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -221,27 +241,26 @@ export function ApplicationForm({
               {...register('hasPets')}
               className="h-4 w-4"
             />
-            <Label htmlFor="hasPets">Haustiere</Label>
+            <Label htmlFor="hasPets">{t('pets')}</Label>
           </div>
         </CardContent>
       </Card>
 
-      {/* Cover Letter */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Bewerbungsschreiben</CardTitle>
+          <CardTitle className="text-lg">{t('coverLetter')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Textarea
             {...register('coverLetter')}
             rows={6}
-            placeholder="Erzaehlen Sie uns etwas ueber sich und warum Sie an dieser Wohnung interessiert sind..."
+            placeholder={t('coverLetterPlaceholder')}
           />
         </CardContent>
       </Card>
 
       <Button type="submit" disabled={submitting} className="w-full">
-        {submitting ? 'Wird eingereicht...' : 'Bewerbung einreichen'}
+        {submitting ? t('submitting') : t('submitButton')}
       </Button>
     </form>
   );

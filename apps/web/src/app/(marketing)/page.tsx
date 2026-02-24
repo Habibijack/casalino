@@ -1,3 +1,5 @@
+import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import {
   Building2,
@@ -8,65 +10,110 @@ import {
   Zap,
 } from 'lucide-react';
 import { Button, Card, CardContent } from '@casalino/ui';
+import { getTranslations, type Locale } from '@/lib/i18n';
+import { detectLocale, LOCALE_COOKIE_NAME } from '@/lib/i18n/detect-locale';
+import { MarketingLanguageSwitcher } from './marketing-lang-switcher';
 
-const FEATURES = [
-  {
-    icon: Users,
-    title: 'Bewerbermanagement',
-    text: 'Alle Bewerbungen zentral verwalten, filtern und mit dem Team teilen.',
+export const metadata: Metadata = {
+  title: 'Casalino -- Vermietung. Intelligent vereinfacht.',
+  description:
+    'AI-gestuetztes End-to-End-Vermietungstool fuer Schweizer Immobilienverwaltungen. Bewerbermanagement, AI-Scoring, digitale Vertraege -- alles in einer Plattform.',
+  alternates: {
+    canonical: '/',
   },
-  {
-    icon: Zap,
-    title: 'AI-Scoring',
-    text: 'Automatische Bewertung nach Finanzen, Dossier und Matching-Kriterien.',
-  },
-  {
-    icon: Building2,
-    title: 'Inserate verwalten',
-    text: 'Inserate erstellen, auf Portalen publizieren und Statistiken einsehen.',
-  },
-  {
-    icon: FileText,
-    title: 'Digitale Vertraege',
-    text: 'Mietvertraege generieren, versenden und digital unterschreiben lassen.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Insights & Analytics',
-    text: 'Funnel-Analysen, Scoring-Verteilung und Trend-Daten auf einen Blick.',
-  },
-  {
-    icon: Shield,
-    title: 'Datenschutz',
-    text: 'Hosting in der Schweiz, DSGVO-konform, diskriminierungsfreies Scoring.',
-  },
-];
+};
 
-export default function LandingPage() {
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://casalino.ch';
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'Organization',
+      name: 'SwissCreo GmbH',
+      url: BASE_URL,
+      logo: `${BASE_URL}/logo.png`,
+      address: {
+        '@type': 'PostalAddress',
+        addressCountry: 'CH',
+      },
+    },
+    {
+      '@type': 'SoftwareApplication',
+      name: 'Casalino',
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      description:
+        'AI-gestuetztes Vermietungstool fuer Schweizer Immobilienverwaltungen.',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'CHF',
+        description: 'Kostenloser Start, Premium-Features nach Bedarf.',
+      },
+    },
+  ],
+};
+
+type FeatureIcon = typeof Users;
+
+function getFeatures(t: (key: string) => string): Array<{
+  icon: FeatureIcon;
+  title: string;
+  text: string;
+}> {
+  return [
+    { icon: Users, title: t('featureApplicants'), text: t('featureApplicantsDesc') },
+    { icon: Zap, title: t('featureScoring'), text: t('featureScoringDesc') },
+    { icon: Building2, title: t('featureListings'), text: t('featureListingsDesc') },
+    { icon: FileText, title: t('featureContracts'), text: t('featureContractsDesc') },
+    { icon: BarChart3, title: t('featureInsights'), text: t('featureInsightsDesc') },
+    { icon: Shield, title: t('featurePrivacy'), text: t('featurePrivacyDesc') },
+  ];
+}
+
+export default async function LandingPage(
+  props: {
+    searchParams: Promise<Record<string, string | string[] | undefined>>;
+  },
+) {
+  const searchParams = await props.searchParams;
+  const cookieStore = await cookies();
+  const cookieValue = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+  const locale: Locale = detectLocale(searchParams, cookieValue);
+  const t = await getTranslations(locale, 'marketing');
+
+  const features = getFeatures(t);
+
   return (
     <div className="flex min-h-screen flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Nav */}
       <header className="flex items-center justify-between px-6 py-4 lg:px-12">
         <span className="font-heading text-2xl">Casalino</span>
-        <Button variant="outline" size="sm" asChild>
-          <Link href="/login">Einloggen</Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <MarketingLanguageSwitcher locale={locale} />
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/login">{t('login')}</Link>
+          </Button>
+        </div>
       </header>
 
       {/* Hero */}
       <section className="flex flex-1 flex-col items-center justify-center px-4 py-20 text-center">
         <h1 className="font-heading text-5xl tracking-tight sm:text-6xl lg:text-7xl">
-          Vermietung. <br className="hidden sm:block" />
-          Intelligent vereinfacht.
+          {t('heroTitle1')} <br className="hidden sm:block" />
+          {t('heroTitle2')}
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
-          Casalino ist das AI-gestuetzte Vermietungstool fuer Schweizer
-          Immobilienverwaltungen. Von der Bewerbung bis zum Vertrag —
-          alles in einer Plattform.
+          {t('heroSubtitle')}
         </p>
         <div className="mt-8 flex gap-4">
           <Button size="lg" asChild>
-            <Link href="/login">Kostenlos starten</Link>
+            <Link href="/login">{t('ctaStart')}</Link>
           </Button>
         </div>
       </section>
@@ -74,10 +121,10 @@ export default function LandingPage() {
       {/* Features */}
       <section className="bg-muted/40 px-6 py-20 lg:px-12">
         <h2 className="mb-12 text-center font-heading text-3xl">
-          Alles was Sie brauchen
+          {t('featuresTitle')}
         </h2>
         <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((feature) => {
+          {features.map((feature) => {
             const Icon = feature.icon;
             return (
               <Card key={feature.title}>
@@ -96,15 +143,12 @@ export default function LandingPage() {
 
       {/* CTA */}
       <section className="px-6 py-20 text-center lg:px-12">
-        <h2 className="font-heading text-3xl">
-          Bereit, Ihre Vermietung zu digitalisieren?
-        </h2>
+        <h2 className="font-heading text-3xl">{t('ctaTitle')}</h2>
         <p className="mx-auto mt-4 max-w-md text-muted-foreground">
-          Starten Sie kostenlos und aktivieren Sie Premium-Features,
-          wenn Sie sie brauchen.
+          {t('ctaSubtitle')}
         </p>
         <Button className="mt-8" size="lg" asChild>
-          <Link href="/login">Jetzt starten</Link>
+          <Link href="/login">{t('ctaButton')}</Link>
         </Button>
       </section>
 
@@ -112,27 +156,26 @@ export default function LandingPage() {
       <footer className="border-t px-6 py-8 lg:px-12">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} SwissCreo GmbH. Made in
-            Switzerland.
+            &copy; {new Date().getFullYear()} {t('footerCopyright')}
           </p>
           <nav className="flex gap-6">
             <Link
               href="/impressum"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              Impressum
+              {t('impressum')}
             </Link>
             <Link
               href="/agb"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              AGB
+              {t('agb')}
             </Link>
             <Link
               href="/datenschutz"
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              Datenschutz
+              {t('datenschutz')}
             </Link>
           </nav>
         </div>

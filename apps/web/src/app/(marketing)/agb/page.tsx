@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { ArrowLeft } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'AGB -- Casalino',
-  description: 'Allgemeine Geschaeftsbedingungen der Casalino Vermietungsplattform.',
+  title: 'AGB',
+  description: 'Allgemeine Geschaeftsbedingungen der Casalino Vermietungsplattform fuer Schweizer Immobilienverwaltungen.',
+  robots: { index: true, follow: true },
 };
 
 export default function AGBPage() {
