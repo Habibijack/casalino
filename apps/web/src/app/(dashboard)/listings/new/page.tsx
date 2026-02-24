@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { Button, Card, CardContent } from '@casalino/ui';
+import { Button } from '@casalino/ui';
+import { NewListingClient } from './client';
 
 export default function NewListingPage() {
   return (
@@ -14,11 +15,7 @@ export default function NewListingPage() {
         <h1 className="font-heading text-3xl">Neues Inserat erstellen</h1>
       </div>
 
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          Inserat-Wizard wird in Phase 2 implementiert.
-        </CardContent>
-      </Card>
+      <NewListingClient />
     </div>
   );
 }

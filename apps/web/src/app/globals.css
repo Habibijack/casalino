@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Scan monorepo packages for Tailwind classes */
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
+
 /* ========================================
    CASALINO B2B DESIGN TOKENS
    Tailwind CSS v4 -- CSS-first Configuration

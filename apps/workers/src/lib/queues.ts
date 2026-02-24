@@ -6,3 +6,5 @@ export const emailQueue = new Queue('email', { connection });
 export const scoringQueue = new Queue('scoring', { connection });
 
 export const creditCheckQueue = new Queue('credit-check', { connection });
+
+export const reminderQueue = new Queue('reminder', { connection });

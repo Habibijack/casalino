@@ -7,6 +7,9 @@ export interface OrgSettings {
   autoRejectThreshold?: number;
   defaultViewingDuration?: number;
   notificationEmail?: string;
+  flatfoxApiKey?: string;
+  stripeCustomerId?: string;
+  activatedFeatures?: string[];
 }
 
 export interface ScoringWeights {

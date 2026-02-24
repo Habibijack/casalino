@@ -24,4 +24,8 @@ export class AppError extends Error {
   static validation(message: string): AppError {
     return new AppError('VALIDATION_ERROR', message, 400);
   }
+
+  static conflict(message: string): AppError {
+    return new AppError('CONFLICT', message, 409);
+  }
 }

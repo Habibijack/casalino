@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { getSession } from '@/lib/auth/get-session';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
@@ -16,10 +17,24 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
+  // User is authenticated but has no organization
+  if (!session.orgId) {
+    const headersList = await headers();
+    const pathname = headersList.get('x-pathname') ?? '';
+
+    // Redirect to onboarding if not already there
+    if (!pathname.startsWith('/onboarding')) {
+      redirect('/onboarding');
+    }
+
+    // Render onboarding page without sidebar
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex h-screen">
       <Sidebar
-        orgName={session.orgName}
+        orgName={session.orgName ?? 'Organisation'}
         userName={session.fullName}
         userEmail={session.email}
       />

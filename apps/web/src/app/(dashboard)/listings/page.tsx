@@ -1,25 +1,20 @@
-import Link from 'next/link';
-import { Plus } from 'lucide-react';
-import { Button, Card, CardContent } from '@casalino/ui';
+import { createApiClient } from '@/lib/api/client';
+import { getAccessToken } from '@/lib/api/get-access-token';
+import { ListingsPageClient } from '@/components/listings/ListingsPageClient';
 
-export default function ListingsPage() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="font-heading text-3xl">Inserate</h1>
-        <Button asChild>
-          <Link href="/listings/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Neues Inserat
-          </Link>
-        </Button>
+export default async function ListingsPage() {
+  const token = await getAccessToken();
+
+  if (!token) {
+    return (
+      <div className="py-12 text-center text-muted-foreground">
+        Nicht authentifiziert.
       </div>
+    );
+  }
 
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          Noch keine Inserate erstellt.
-        </CardContent>
-      </Card>
-    </div>
-  );
+  const client = createApiClient(token);
+  const data = await client.listings.list();
+
+  return <ListingsPageClient listings={data.items} />;
 }

@@ -1,19 +1,100 @@
 import { Hono } from 'hono';
+import { createContractSchema } from '@casalino/shared';
 import type { AppEnv } from '../types';
+import { AppError } from '../lib/errors';
+import { requireRole } from '../lib/query-helpers';
+import {
+  listContracts,
+  getContractById,
+  createContract,
+  updateContractData,
+  updateHandoverData,
+  sendForSignature,
+  signContract,
+  getContractByToken,
+} from '../services/contracts.service';
 
+// Protected routes (require auth)
 export const contractsRouter = new Hono<AppEnv>()
-  .get('/', (c) => {
+
+  .get('/', async (c) => {
     const orgId = c.get('orgId');
-    return c.json({ success: true, data: { items: [], orgId } });
+    const items = await listContracts(orgId);
+    return c.json({ success: true, data: { items } });
   })
-  .get('/:id', (c) => {
+
+  .get('/:id', async (c) => {
+    const orgId = c.get('orgId');
     const id = c.req.param('id');
-    return c.json({ success: true, data: { id, message: 'Contract detail - Phase 2' } });
+    const contract = await getContractById(orgId, id);
+    return c.json({ success: true, data: contract });
   })
-  .post('/', (c) => {
-    return c.json({ success: true, data: { message: 'Create contract - Phase 2' } }, 201);
+
+  .post('/', async (c) => {
+    const orgId = c.get('orgId');
+    const userId = c.get('userId');
+    const orgRole = c.get('orgRole');
+    requireRole(orgRole, 'admin', 'editor');
+
+    const body = await c.req.json();
+    const parsed = createContractSchema.safeParse(body);
+
+    if (!parsed.success) {
+      throw AppError.validation(
+        parsed.error.errors[0]?.message ?? 'Ungueltige Daten',
+      );
+    }
+
+    const contract = await createContract(orgId, userId, parsed.data);
+    return c.json({ success: true, data: contract }, 201);
   })
-  .patch('/:id', (c) => {
+
+  .patch('/:id/data', async (c) => {
+    const orgId = c.get('orgId');
+    const userId = c.get('userId');
+    const orgRole = c.get('orgRole');
+    requireRole(orgRole, 'admin', 'editor');
+
     const id = c.req.param('id');
-    return c.json({ success: true, data: { id, message: 'Update contract - Phase 2' } });
+    const body = await c.req.json();
+    const contract = await updateContractData(orgId, userId, id, body);
+    return c.json({ success: true, data: contract });
+  })
+
+  .patch('/:id/handover', async (c) => {
+    const orgId = c.get('orgId');
+    const userId = c.get('userId');
+    const orgRole = c.get('orgRole');
+    requireRole(orgRole, 'admin', 'editor');
+
+    const id = c.req.param('id');
+    const body = await c.req.json();
+    const contract = await updateHandoverData(orgId, userId, id, body);
+    return c.json({ success: true, data: contract });
+  })
+
+  .post('/:id/send', async (c) => {
+    const orgId = c.get('orgId');
+    const userId = c.get('userId');
+    const orgRole = c.get('orgRole');
+    requireRole(orgRole, 'admin', 'editor');
+
+    const id = c.req.param('id');
+    const contract = await sendForSignature(orgId, userId, id);
+    return c.json({ success: true, data: contract });
+  });
+
+// Public routes (no auth)
+export const publicContractsRouter = new Hono()
+
+  .get('/sign/:token', async (c) => {
+    const token = c.req.param('token');
+    const contract = await getContractByToken(token);
+    return c.json({ success: true, data: contract });
+  })
+
+  .post('/sign/:token', async (c) => {
+    const token = c.req.param('token');
+    const contract = await signContract(token);
+    return c.json({ success: true, data: contract });
   });

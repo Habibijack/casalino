@@ -1,19 +1,97 @@
 import { Hono } from 'hono';
+import {
+  inviteMemberSchema,
+  updateMemberRoleSchema,
+} from '@casalino/shared';
 import type { AppEnv } from '../types';
+import { AppError } from '../lib/errors';
+import { requireRole } from '../lib/query-helpers';
+import {
+  listMembers,
+  inviteMember,
+  updateMemberRole,
+  removeMember,
+  getOrganization,
+  updateOrganization,
+} from '../services/members.service';
 
 export const membersRouter = new Hono<AppEnv>()
-  .get('/', (c) => {
+
+  // List members
+  .get('/', async (c) => {
     const orgId = c.get('orgId');
-    return c.json({ success: true, data: { items: [], orgId } });
+    const members = await listMembers(orgId);
+    return c.json({ success: true, data: members });
   })
-  .post('/invite', (c) => {
-    return c.json({ success: true, data: { message: 'Invite member - Phase 2' } }, 201);
+
+  // Get organization details
+  .get('/organization', async (c) => {
+    const orgId = c.get('orgId');
+    const org = await getOrganization(orgId);
+    return c.json({ success: true, data: org });
   })
-  .patch('/:id/role', (c) => {
+
+  // Update organization
+  .patch('/organization', async (c) => {
+    const orgId = c.get('orgId');
+    const userId = c.get('userId');
+    const orgRole = c.get('orgRole');
+    requireRole(orgRole, 'admin');
+
+    const body = await c.req.json();
+    const org = await updateOrganization(orgId, userId, body);
+    return c.json({ success: true, data: org });
+  })
+
+  // Invite member
+  .post('/invite', async (c) => {
+    const orgId = c.get('orgId');
+    const userId = c.get('userId');
+    const orgRole = c.get('orgRole');
+    requireRole(orgRole, 'admin');
+
+    const body = await c.req.json();
+    const parsed = inviteMemberSchema.safeParse(body);
+
+    if (!parsed.success) {
+      throw AppError.validation(
+        parsed.error.errors[0]?.message ?? 'Ungueltige Daten',
+      );
+    }
+
+    const member = await inviteMember(orgId, userId, parsed.data);
+    return c.json({ success: true, data: member }, 201);
+  })
+
+  // Update member role
+  .patch('/:id/role', async (c) => {
+    const orgId = c.get('orgId');
+    const userId = c.get('userId');
+    const orgRole = c.get('orgRole');
+    requireRole(orgRole, 'admin');
+
     const id = c.req.param('id');
-    return c.json({ success: true, data: { id, message: 'Update member role - Phase 2' } });
+    const body = await c.req.json();
+    const parsed = updateMemberRoleSchema.safeParse(body);
+
+    if (!parsed.success) {
+      throw AppError.validation(
+        parsed.error.errors[0]?.message ?? 'Ungueltige Daten',
+      );
+    }
+
+    const updated = await updateMemberRole(orgId, userId, id, parsed.data);
+    return c.json({ success: true, data: updated });
   })
-  .delete('/:id', (c) => {
+
+  // Remove member
+  .delete('/:id', async (c) => {
+    const orgId = c.get('orgId');
+    const userId = c.get('userId');
+    const orgRole = c.get('orgRole');
+    requireRole(orgRole, 'admin');
+
     const id = c.req.param('id');
-    return c.json({ success: true, data: { id, message: 'Remove member - Phase 2' } });
+    await removeMember(orgId, userId, id);
+    return c.json({ success: true, data: { removed: true } });
   });

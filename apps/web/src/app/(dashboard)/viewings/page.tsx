@@ -1,15 +1,37 @@
-import { Card, CardContent } from '@casalino/ui';
+import { createApiClient } from '@/lib/api/client';
+import { getAccessToken } from '@/lib/api/get-access-token';
+import { ViewingsPageClient } from './client';
 
-export default function ViewingsPage() {
+export default async function ViewingsPage() {
+  const token = await getAccessToken();
+
+  if (!token) {
+    return (
+      <div className="py-12 text-center text-muted-foreground">
+        Nicht authentifiziert.
+      </div>
+    );
+  }
+
+  const client = createApiClient(token);
+
+  const [viewingsResult, applicationsResult] = await Promise.all([
+    client.viewings.list({ upcoming: 'true' }),
+    client.applications.list({ status: 'screening', limit: '100' }),
+  ]);
+
+  // Map applications for the create dialog
+  const applicationOptions = applicationsResult.items.map((app) => ({
+    id: app.id,
+    applicantName: app.applicantName,
+    listingId: app.listingId,
+    listingAddress: app.listingAddress ?? '',
+  }));
+
   return (
-    <div className="space-y-6">
-      <h1 className="font-heading text-3xl">Besichtigungen</h1>
-
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          Besichtigungskalender wird in Phase 2 implementiert.
-        </CardContent>
-      </Card>
-    </div>
+    <ViewingsPageClient
+      viewings={viewingsResult.items}
+      applications={applicationOptions}
+    />
   );
 }

@@ -3,14 +3,22 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import type { AppEnv } from './types';
 import { errorHandler } from './middleware/error-handler';
+import { rateLimiter } from './middleware/rate-limit';
 import { authMiddleware } from './middleware/auth';
 import { orgContextMiddleware } from './middleware/org-context';
 import { healthRouter } from './routes/health';
-import { listingsRouter } from './routes/listings';
-import { applicationsRouter } from './routes/applications';
+import { listingsRouter, publicListingsRouter } from './routes/listings';
+import { applicationsRouter, publicApplicationsRouter } from './routes/applications';
 import { viewingsRouter } from './routes/viewings';
-import { contractsRouter } from './routes/contracts';
+import { contractsRouter, publicContractsRouter } from './routes/contracts';
+import { publicViewingsRouter } from './routes/public-viewings';
 import { membersRouter } from './routes/members';
+import { dashboardRouter } from './routes/dashboard';
+import { portalsRouter } from './routes/portals';
+import { billingRouter, stripeWebhookRouter } from './routes/billing';
+import { insightsRouter } from './routes/insights';
+import { documentsRouter } from './routes/documents';
+import { onboardingRouter } from './routes/onboarding';
 
 const app = new Hono<AppEnv>();
 
@@ -19,6 +27,7 @@ const app = new Hono<AppEnv>();
 // ---------------------
 
 app.use('*', logger());
+app.use('*', rateLimiter({ max: 100, windowSec: 60 }));
 
 app.use(
   '*',
@@ -42,6 +51,21 @@ app.onError(errorHandler);
 // ---------------------
 
 app.route('/api/v1', healthRouter);
+app.route('/api/v1/public/applications', publicApplicationsRouter);
+app.route('/api/v1/public/listings', publicListingsRouter);
+app.route('/api/v1/public/contracts', publicContractsRouter);
+app.route('/api/v1/public/viewings', publicViewingsRouter);
+app.route('/api/v1/webhooks/stripe', stripeWebhookRouter);
+
+// ---------------------
+// Auth-only routes (no org required)
+// ---------------------
+
+const authOnlyApi = new Hono<AppEnv>();
+authOnlyApi.use('*', authMiddleware);
+authOnlyApi.route('/onboarding', onboardingRouter);
+
+app.route('/api/v1', authOnlyApi);
 
 // ---------------------
 // Protected routes
@@ -57,6 +81,11 @@ protectedApi.route('/applications', applicationsRouter);
 protectedApi.route('/viewings', viewingsRouter);
 protectedApi.route('/contracts', contractsRouter);
 protectedApi.route('/members', membersRouter);
+protectedApi.route('/dashboard', dashboardRouter);
+protectedApi.route('/portals', portalsRouter);
+protectedApi.route('/billing', billingRouter);
+protectedApi.route('/insights', insightsRouter);
+protectedApi.route('/documents', documentsRouter);
 
 app.route('/api/v1', protectedApi);
 

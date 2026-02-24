@@ -1,7 +1,9 @@
 // Casalino B2B Constants
 
 export const APP_NAME = 'Casalino';
-export const APP_URL = 'https://app.casalino.ch';
+export const APP_URL = typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_APP_URL
+  ? process.env.NEXT_PUBLIC_APP_URL
+  : 'https://app.casalino.ch';
 
 // Organization member roles
 export const ORG_ROLES = ['admin', 'editor', 'viewer'] as const;

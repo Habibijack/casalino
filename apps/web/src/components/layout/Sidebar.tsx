@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  BarChart3,
   Building2,
   Calendar,
   FileText,
@@ -20,11 +21,12 @@ interface NavItem {
 }
 
 const NAV_ITEMS: readonly NavItem[] = [
-  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Inserate', href: '/listings', icon: Building2 },
   { label: 'Bewerber', href: '/applicants', icon: Users },
   { label: 'Besichtigungen', href: '/viewings', icon: Calendar },
   { label: 'Vertraege', href: '/contracts', icon: FileText },
+  { label: 'Insights', href: '/insights', icon: BarChart3 },
   { label: 'Einstellungen', href: '/settings', icon: Settings },
 ] as const;
 
@@ -35,8 +37,8 @@ interface SidebarProps {
 }
 
 function isNavActive(pathname: string, href: string): boolean {
-  if (href === '/') {
-    return pathname === '/';
+  if (href === '/dashboard') {
+    return pathname === '/dashboard';
   }
   return pathname.startsWith(href);
 }
@@ -47,7 +49,7 @@ export function Sidebar({ orgName, userName, userEmail }: SidebarProps) {
   return (
     <aside className="flex h-screen w-[220px] shrink-0 flex-col bg-sidebar text-sidebar-foreground">
       <div className="flex h-16 items-center px-5">
-        <Link href="/" className="text-lg font-bold text-white">
+        <Link href="/dashboard" className="text-lg font-bold text-white">
           Casalino
         </Link>
       </div>

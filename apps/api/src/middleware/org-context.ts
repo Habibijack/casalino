@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import type { AppEnv } from '../types';
-import { supabaseAdmin } from '../lib/supabase';
+import { getSupabaseAdmin } from '../lib/supabase';
 import { AppError } from '../lib/errors';
 
 function isValidOrgRole(role: string): role is 'admin' | 'editor' | 'viewer' {
@@ -11,12 +11,13 @@ export const orgContextMiddleware = createMiddleware<AppEnv>(
   async (c, next) => {
     const userId = c.get('userId');
 
-    const { data: membership } = await supabaseAdmin
+    const supabase = getSupabaseAdmin();
+    const { data: membership } = await supabase
       .from('org_members')
       .select('org_id, role')
       .eq('user_id', userId)
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!membership) {
       throw AppError.forbidden('Keine Organisationsmitgliedschaft');

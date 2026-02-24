@@ -60,9 +60,9 @@ export type SessionUser = {
   email: string;
   fullName: string | null;
   avatarUrl: string | null;
-  orgId: string;
-  orgRole: 'admin' | 'editor' | 'viewer';
-  orgName: string;
+  orgId: string | null;
+  orgRole: 'admin' | 'editor' | 'viewer' | null;
+  orgName: string | null;
 };
 
 // ---------------------

@@ -15,13 +15,35 @@ export interface ContractData {
   specialClauses?: string[];
 }
 
+export interface HandoverRoomEntry {
+  room: string;
+  condition: 'einwandfrei' | 'maengel' | 'schaeden';
+  notes: string;
+}
+
+export interface HandoverData {
+  handoverDate: string;
+  rooms: HandoverRoomEntry[];
+  meterReadings: {
+    electricity?: number;
+    water?: number;
+    heating?: number;
+  };
+  keysHandedOver: number;
+  tenantSignature: boolean;
+  landlordSignature: boolean;
+  generalNotes: string;
+}
+
 export const contracts = pgTable('contracts', {
   id: uuid('id').primaryKey().defaultRandom(),
   listingId: uuid('listing_id').notNull().references(() => listings.id),
   applicationId: uuid('application_id').notNull().references(() => applications.id),
   status: text('status').notNull().default('draft'),
   contractData: jsonb('contract_data').$type<ContractData>(),
+  handoverData: jsonb('handover_data').$type<HandoverData>(),
   pdfStoragePath: text('pdf_storage_path'),
+  signToken: text('sign_token').unique(),
   sentAt: timestamp('sent_at', { withTimezone: true }),
   signedAt: timestamp('signed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

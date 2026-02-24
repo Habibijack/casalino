@@ -1,6 +1,6 @@
 import { createMiddleware } from 'hono/factory';
 import type { AppEnv } from '../types';
-import { supabaseAdmin } from '../lib/supabase';
+import { getSupabaseAdmin } from '../lib/supabase';
 import { AppError } from '../lib/errors';
 
 function extractBearerToken(header: string | undefined): string | null {
@@ -18,17 +18,18 @@ export const authMiddleware = createMiddleware<AppEnv>(
       throw AppError.unauthorized('Missing Bearer token');
     }
 
-    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    const supabase = getSupabaseAdmin();
+    const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data.user) {
       throw AppError.unauthorized('Invalid or expired token');
     }
 
-    const { data: profile } = await supabaseAdmin
+    const { data: profile } = await supabase
       .from('users')
       .select('id')
       .eq('supabase_auth_id', data.user.id)
-      .single();
+      .maybeSingle();
 
     if (!profile) {
       throw AppError.unauthorized('User not found in database');

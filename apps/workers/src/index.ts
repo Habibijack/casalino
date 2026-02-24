@@ -1,5 +1,13 @@
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+config({ path: '.env' });
+
 import { Worker, type Job } from 'bullmq';
 import { connection } from './lib/redis';
+import { processScoringJob } from './processors/scoring.processor';
+import { processEmailJob } from './processors/email.processor';
+import { processCreditCheckJob } from './processors/credit-check.processor';
+import { processReminderJob } from './processors/reminder.processor';
 
 function logCompleted(queueName: string) {
   return (job: Job | undefined) => {
@@ -22,10 +30,7 @@ console.log('Casalino Workers starting...');
 // ---------------------------------------------------------------------------
 const emailWorker = new Worker(
   'email',
-  async (job: Job) => {
-    console.log(`Processing email job: ${job.name}`, job.data);
-    // Implementation in Phase 2
-  },
+  processEmailJob,
   { connection },
 );
 
@@ -37,10 +42,7 @@ emailWorker.on('failed', logFailed('email'));
 // ---------------------------------------------------------------------------
 const scoringWorker = new Worker(
   'scoring',
-  async (job: Job) => {
-    console.log(`Processing scoring job: ${job.name}`, job.data);
-    // Implementation in Phase 2
-  },
+  processScoringJob,
   { connection },
 );
 
@@ -52,14 +54,23 @@ scoringWorker.on('failed', logFailed('scoring'));
 // ---------------------------------------------------------------------------
 const creditWorker = new Worker(
   'credit-check',
-  async (job: Job) => {
-    console.log(`Processing credit check job: ${job.name}`, job.data);
-    // Implementation in Phase 2
-  },
+  processCreditCheckJob,
   { connection },
 );
 
 creditWorker.on('completed', logCompleted('credit-check'));
 creditWorker.on('failed', logFailed('credit-check'));
 
-console.log('Workers registered: email, scoring, credit-check');
+// ---------------------------------------------------------------------------
+// Reminder worker
+// ---------------------------------------------------------------------------
+const reminderWorker = new Worker(
+  'reminder',
+  processReminderJob,
+  { connection },
+);
+
+reminderWorker.on('completed', logCompleted('reminder'));
+reminderWorker.on('failed', logFailed('reminder'));
+
+console.log('Workers registered: email, scoring, credit-check, reminder');
