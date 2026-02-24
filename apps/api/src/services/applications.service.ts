@@ -13,6 +13,7 @@ import {
   writeAuditLog,
 } from '../lib/query-helpers';
 import { scoringQueue, emailQueue } from '../lib/queues';
+import { notifyAllOrgMembers } from './notification-triggers';
 
 // ---------------------
 // List applications for an org
@@ -141,7 +142,13 @@ export async function createApplication(input: CreateApplicationInput) {
 
   // Verify listing exists and is live
   const [listing] = await db
-    .select({ id: listings.id, status: listings.status })
+    .select({
+      id: listings.id,
+      status: listings.status,
+      orgId: listings.orgId,
+      address: listings.address,
+      city: listings.city,
+    })
     .from(listings)
     .where(eq(listings.id, input.listingId))
     .limit(1);
@@ -189,6 +196,16 @@ export async function createApplication(input: CreateApplicationInput) {
   // Enqueue scoring job (async — does not block the response)
   await scoringQueue.add('score-application', {
     applicationId: application!.id,
+  });
+
+  // Notify org members about new application
+  await notifyAllOrgMembers({
+    orgId: listing.orgId,
+    type: 'application_new',
+    title: 'Neue Bewerbung',
+    message: `Neue Bewerbung von ${input.applicantName} fuer ${listing.address}, ${listing.city}`,
+    entityType: 'application',
+    entityId: application!.id,
   });
 
   return application!;

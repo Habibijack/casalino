@@ -10,3 +10,4 @@ export * from './contracts';
 export * from './communications';
 export * from './audit-log';
 export * from './reference-checks';
+export * from './notifications';

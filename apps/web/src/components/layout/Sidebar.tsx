@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BarChart3,
+  Bell,
   Building2,
   Calendar,
   FileText,
@@ -34,6 +35,7 @@ interface SidebarProps {
   orgName: string;
   userName: string | null;
   userEmail: string;
+  unreadNotifications?: number;
 }
 
 function isNavActive(pathname: string, href: string): boolean {
@@ -43,14 +45,25 @@ function isNavActive(pathname: string, href: string): boolean {
   return pathname.startsWith(href);
 }
 
-export function Sidebar({ orgName, userName, userEmail }: SidebarProps) {
+export function Sidebar({ orgName, userName, userEmail, unreadNotifications = 0 }: SidebarProps) {
   const pathname = usePathname();
 
   return (
     <aside className="flex h-screen w-[220px] shrink-0 flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-16 items-center px-5">
+      <div className="flex h-16 items-center justify-between px-5">
         <Link href="/dashboard" className="text-lg font-bold text-white">
           Casalino
+        </Link>
+        <Link
+          href="/notifications"
+          className="relative text-sidebar-muted transition-colors hover:text-white"
+        >
+          <Bell className="h-5 w-5" />
+          {unreadNotifications > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+              {unreadNotifications > 99 ? '99+' : unreadNotifications}
+            </span>
+          )}
         </Link>
       </div>
 

@@ -28,6 +28,7 @@ export default async function SettingsPage() {
       members={members}
       currentUserId={session.id}
       isAdmin={session.orgRole === 'admin'}
+      token={token}
     />
   );
 }

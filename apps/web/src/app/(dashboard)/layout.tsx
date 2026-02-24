@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { getSession } from '@/lib/auth/get-session';
+import { getAccessToken } from '@/lib/api/get-access-token';
+import { createApiClient } from '@/lib/api/client';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { UserMenu } from '@/components/layout/UserMenu';
@@ -32,12 +34,26 @@ export default async function DashboardLayout({
     return <>{children}</>;
   }
 
+  // Fetch unread notification count (non-blocking)
+  let unreadNotifications = 0;
+  try {
+    const token = await getAccessToken();
+    if (token) {
+      const client = createApiClient(token);
+      const result = await client.notifications.unreadCount();
+      unreadNotifications = result.count;
+    }
+  } catch {
+    // Silently fail — badge just won't show
+  }
+
   return (
     <div className="flex h-screen">
       <Sidebar
         orgName={session.orgName ?? 'Organisation'}
         userName={session.fullName}
         userEmail={session.email}
+        unreadNotifications={unreadNotifications}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header>

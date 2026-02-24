@@ -15,8 +15,24 @@ import {
   getOrganization,
   updateOrganization,
 } from '../services/members.service';
+import { listActivity } from '../services/activity.service';
+
+const DEFAULT_ACTIVITY_LIMIT = 50;
+const MAX_ACTIVITY_LIMIT = 200;
 
 export const membersRouter = new Hono<AppEnv>()
+
+  // List activity log
+  .get('/activity', async (c) => {
+    const orgId = c.get('orgId');
+    const rawLimit = c.req.query('limit');
+    const limit = rawLimit
+      ? Math.min(Math.max(1, Number(rawLimit) || DEFAULT_ACTIVITY_LIMIT), MAX_ACTIVITY_LIMIT)
+      : DEFAULT_ACTIVITY_LIMIT;
+
+    const entries = await listActivity(orgId, limit);
+    return c.json({ success: true, data: entries });
+  })
 
   // List members
   .get('/', async (c) => {

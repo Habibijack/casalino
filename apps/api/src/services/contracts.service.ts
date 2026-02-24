@@ -8,6 +8,7 @@ import { requireRole, writeAuditLog } from '../lib/query-helpers';
 import { emailQueue } from '../lib/queues';
 import { randomBytes } from 'crypto';
 import { generateContractPdf } from './pdf.service';
+import { notifyAllOrgMembers } from './notification-triggers';
 
 // ---------------------
 // List contracts for org
@@ -290,6 +291,7 @@ export async function signContract(signToken: string) {
       id: contracts.id,
       status: contracts.status,
       signTokenExpiresAt: contracts.signTokenExpiresAt,
+      listingId: contracts.listingId,
     })
     .from(contracts)
     .where(eq(contracts.signToken, signToken))
@@ -320,6 +322,28 @@ export async function signContract(signToken: string) {
     })
     .where(eq(contracts.id, contract.id))
     .returning();
+
+  // Look up listing org for notification
+  const [listing] = await db
+    .select({
+      orgId: listings.orgId,
+      address: listings.address,
+      city: listings.city,
+    })
+    .from(listings)
+    .where(eq(listings.id, contract.listingId))
+    .limit(1);
+
+  if (listing) {
+    await notifyAllOrgMembers({
+      orgId: listing.orgId,
+      type: 'contract_signed',
+      title: 'Vertrag unterschrieben',
+      message: `Vertrag fuer ${listing.address}, ${listing.city} wurde unterschrieben`,
+      entityType: 'contract',
+      entityId: contract.id,
+    });
+  }
 
   return updated!;
 }

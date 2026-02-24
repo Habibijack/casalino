@@ -17,6 +17,7 @@ import {
 } from '@casalino/ui';
 import { MembersTable } from '@/components/settings/MembersTable';
 import { InviteMemberDialog } from '@/components/settings/InviteMemberDialog';
+import { ActivityLog } from '@/components/settings/ActivityLog';
 import {
   inviteMemberAction,
   updateMemberRoleAction,
@@ -30,6 +31,7 @@ interface SettingsPageClientProps {
   members: MemberRow[];
   currentUserId: string;
   isAdmin: boolean;
+  token: string;
 }
 
 export function SettingsPageClient({
@@ -37,6 +39,7 @@ export function SettingsPageClient({
   members,
   currentUserId,
   isAdmin,
+  token,
 }: SettingsPageClientProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -76,6 +79,7 @@ export function SettingsPageClient({
         <TabsList>
           <TabsTrigger value="team">Team</TabsTrigger>
           <TabsTrigger value="organization">Organisation</TabsTrigger>
+          <TabsTrigger value="activity">Aktivitaet</TabsTrigger>
         </TabsList>
 
         <TabsContent value="team" className="mt-4 space-y-4">
@@ -103,6 +107,10 @@ export function SettingsPageClient({
             organization={organization}
             isAdmin={isAdmin}
           />
+        </TabsContent>
+
+        <TabsContent value="activity" className="mt-4">
+          <ActivityLog token={token} />
         </TabsContent>
       </Tabs>
     </div>

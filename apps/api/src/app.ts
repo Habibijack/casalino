@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import type { AppEnv } from './types';
 import { errorHandler } from './middleware/error-handler';
 import { requestLogger } from './middleware/request-logger';
+import { compressionMiddleware } from './middleware/compress';
 import { rateLimiter, publicRateLimiter, webhookRateLimiter } from './middleware/rate-limit';
 import { authMiddleware } from './middleware/auth';
 import { orgContextMiddleware } from './middleware/org-context';
@@ -21,6 +22,7 @@ import { documentsRouter } from './routes/documents';
 import { onboardingRouter } from './routes/onboarding';
 import { gdprRouter } from './routes/gdpr';
 import { referenceChecksRouter, publicReferenceRouter } from './routes/reference-checks';
+import { notificationsRouter } from './routes/notifications';
 
 const app = new Hono<AppEnv>();
 
@@ -29,6 +31,7 @@ const app = new Hono<AppEnv>();
 // ---------------------
 
 app.use('*', requestLogger);
+app.use('*', compressionMiddleware);
 app.use('*', rateLimiter({ max: 100, windowSec: 60 }));
 
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? 'http://localhost:3737')
@@ -105,6 +108,7 @@ protectedApi.route('/insights', insightsRouter);
 protectedApi.route('/documents', documentsRouter);
 protectedApi.route('/gdpr', gdprRouter);
 protectedApi.route('/reference-checks', referenceChecksRouter);
+protectedApi.route('/notifications', notificationsRouter);
 
 app.route('/api/v1', protectedApi);
 

@@ -14,6 +14,7 @@ import { getDb } from '../lib/db';
 import { AppError } from '../lib/errors';
 import { writeAuditLog } from '../lib/query-helpers';
 import { emailQueue } from '../lib/queues';
+import { notifyAllOrgMembers } from './notification-triggers';
 
 // ---------------------
 // Create reference check
@@ -260,6 +261,35 @@ export async function submitReference(
       .update(applications)
       .set({ scoreTotal: newScore, updatedAt: new Date() })
       .where(eq(applications.id, refCheck.applicationId));
+  }
+
+  // Notify org members about the completed reference
+  const [appDetail] = await db
+    .select({
+      applicantName: applications.applicantName,
+      listingId: applications.listingId,
+    })
+    .from(applications)
+    .where(eq(applications.id, refCheck.applicationId))
+    .limit(1);
+
+  if (appDetail) {
+    const [listing] = await db
+      .select({ orgId: listings.orgId })
+      .from(listings)
+      .where(eq(listings.id, appDetail.listingId))
+      .limit(1);
+
+    if (listing) {
+      await notifyAllOrgMembers({
+        orgId: listing.orgId,
+        type: 'reference_completed',
+        title: 'Referenz eingegangen',
+        message: `Referenz fuer ${appDetail.applicantName} wurde abgegeben`,
+        entityType: 'application',
+        entityId: refCheck.applicationId,
+      });
+    }
   }
 
   return updated!;

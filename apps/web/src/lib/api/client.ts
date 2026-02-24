@@ -198,6 +198,11 @@ export function createApiClient(token: string) {
         return apiFetch<MemberRow[]>('/members', { token });
       },
 
+      activity(limit?: number) {
+        const qs = limit ? `?limit=${limit}` : '';
+        return apiFetch<ActivityEntry[]>(`/members/activity${qs}`, { token });
+      },
+
       getOrganization() {
         return apiFetch<OrganizationRow>('/members/organization', { token });
       },
@@ -311,6 +316,39 @@ export function createApiClient(token: string) {
         return apiFetch<ListingPerformanceRow[]>(
           '/insights/listings-performance',
           { token },
+        );
+      },
+    },
+
+    notifications: {
+      list(params?: Record<string, string>) {
+        const qs = params
+          ? '?' + new URLSearchParams(params).toString()
+          : '';
+        return apiFetch<NotificationRow[]>(
+          `/notifications${qs}`,
+          { token },
+        );
+      },
+
+      unreadCount() {
+        return apiFetch<{ count: number }>(
+          '/notifications/count',
+          { token },
+        );
+      },
+
+      markRead(id: string) {
+        return apiFetch<{ read: boolean }>(
+          `/notifications/${id}/read`,
+          { method: 'PATCH', token },
+        );
+      },
+
+      markAllRead() {
+        return apiFetch<{ readAll: boolean }>(
+          '/notifications/read-all',
+          { method: 'POST', token },
         );
       },
     },
@@ -575,6 +613,28 @@ export interface PriceSuggestionRow {
   suggestedMax: number;
   pricePerSqm: number;
   basis: string;
+}
+
+export interface ActivityEntry {
+  id: string;
+  action: string;
+  entityType: string | null;
+  entityId: string | null;
+  userId: string | null;
+  userName: string | null;
+  details: Record<string, unknown> | null;
+  createdAt: string;
+}
+
+export interface NotificationRow {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  entityType: string | null;
+  entityId: string | null;
+  read: boolean;
+  createdAt: string;
 }
 
 export interface ReferenceCheckRow {
