@@ -107,4 +107,99 @@ export const insightsRouter = new Hono<AppEnv>()
       .orderBy(sql`1`);
 
     return c.json({ success: true, data: trend });
+  })
+
+  // Time-to-fill: avg days from listing published to contract signed
+  .get('/time-to-fill', async (c) => {
+    const orgId = c.get('orgId');
+    const db = getDb();
+
+    const result = await db
+      .select({
+        avgDays: sql<number>`
+          COALESCE(
+            ROUND(AVG(
+              EXTRACT(EPOCH FROM (${contracts.signedAt} - ${listings.publishedAt})) / 86400
+            )::numeric, 1),
+            0
+          )::float
+        `,
+        count: sql<number>`count(*)::int`,
+        minDays: sql<number>`
+          COALESCE(
+            ROUND(MIN(
+              EXTRACT(EPOCH FROM (${contracts.signedAt} - ${listings.publishedAt})) / 86400
+            )::numeric, 0),
+            0
+          )::float
+        `,
+        maxDays: sql<number>`
+          COALESCE(
+            ROUND(MAX(
+              EXTRACT(EPOCH FROM (${contracts.signedAt} - ${listings.publishedAt})) / 86400
+            )::numeric, 0),
+            0
+          )::float
+        `,
+      })
+      .from(contracts)
+      .innerJoin(listings, eq(contracts.listingId, listings.id))
+      .where(
+        and(
+          eq(listings.orgId, orgId),
+          eq(contracts.status, 'signed'),
+          sql`${contracts.signedAt} IS NOT NULL`,
+          sql`${listings.publishedAt} IS NOT NULL`,
+        ),
+      );
+
+    const row = result[0];
+
+    return c.json({
+      success: true,
+      data: {
+        avgDays: row?.avgDays ?? 0,
+        minDays: row?.minDays ?? 0,
+        maxDays: row?.maxDays ?? 0,
+        completedContracts: row?.count ?? 0,
+      },
+    });
+  })
+
+  // Per-listing performance: apps count, avg score, status
+  .get('/listings-performance', async (c) => {
+    const orgId = c.get('orgId');
+    const db = getDb();
+
+    const rows = await db
+      .select({
+        id: listings.id,
+        address: listings.address,
+        city: listings.city,
+        status: listings.status,
+        priceChf: listings.priceChf,
+        publishedAt: listings.publishedAt,
+        applicationCount: sql<number>`count(${applications.id})::int`,
+        avgScore: sql<number>`COALESCE(ROUND(AVG(${applications.scoreTotal})::numeric, 1), 0)::float`,
+        topCandidates: sql<number>`count(*) FILTER (WHERE ${applications.scoreTotal} >= 80)::int`,
+      })
+      .from(listings)
+      .leftJoin(
+        applications,
+        and(
+          eq(applications.listingId, listings.id),
+          isNull(applications.deletedAt),
+        ),
+      )
+      .where(
+        and(
+          eq(listings.orgId, orgId),
+          isNull(listings.deletedAt),
+        ),
+      )
+      .groupBy(listings.id)
+      .orderBy(desc(listings.createdAt))
+      .limit(20);
+
+    return c.json({ success: true, data: rows });
   });

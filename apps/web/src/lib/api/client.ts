@@ -302,6 +302,17 @@ export function createApiClient(token: string) {
       trend() {
         return apiFetch<TrendDataPoint[]>('/insights/trend', { token });
       },
+
+      timeToFill() {
+        return apiFetch<TimeToFillData>('/insights/time-to-fill', { token });
+      },
+
+      listingsPerformance() {
+        return apiFetch<ListingPerformanceRow[]>(
+          '/insights/listings-performance',
+          { token },
+        );
+      },
     },
 
     references: {
@@ -538,6 +549,25 @@ export interface ScoringDistributionData {
 export interface TrendDataPoint {
   month: string;
   count: number;
+}
+
+export interface TimeToFillData {
+  avgDays: number;
+  minDays: number;
+  maxDays: number;
+  completedContracts: number;
+}
+
+export interface ListingPerformanceRow {
+  id: string;
+  address: string;
+  city: string;
+  status: string;
+  priceChf: number;
+  publishedAt: string | null;
+  applicationCount: number;
+  avgScore: number;
+  topCandidates: number;
 }
 
 export interface PriceSuggestionRow {
