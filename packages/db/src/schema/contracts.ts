@@ -44,6 +44,7 @@ export const contracts = pgTable('contracts', {
   handoverData: jsonb('handover_data').$type<HandoverData>(),
   pdfStoragePath: text('pdf_storage_path'),
   signToken: text('sign_token').unique(),
+  signTokenExpiresAt: timestamp('sign_token_expires_at', { withTimezone: true }),
   sentAt: timestamp('sent_at', { withTimezone: true }),
   signedAt: timestamp('signed_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

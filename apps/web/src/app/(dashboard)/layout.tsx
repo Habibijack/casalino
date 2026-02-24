@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import { getSession } from '@/lib/auth/get-session';
@@ -50,6 +51,28 @@ export default async function DashboardLayout({
         </Header>
         <main className="flex-1 overflow-auto p-6">
           {children}
+          <footer className="mt-12 border-t pt-4 pb-2">
+            <nav className="flex gap-4">
+              <Link
+                href="/impressum"
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Impressum
+              </Link>
+              <Link
+                href="/agb"
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                AGB
+              </Link>
+              <Link
+                href="/datenschutz"
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Datenschutz
+              </Link>
+            </nav>
+          </footer>
         </main>
       </div>
       <CommandPalette />

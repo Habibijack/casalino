@@ -101,6 +101,7 @@ describe('createApplicationSchema', () => {
   const validApplication = {
     listingId: '550e8400-e29b-41d4-a716-446655440000',
     applicantName: 'Max Muster',
+    consent: true,
   };
 
   it('accepts valid application with defaults', () => {

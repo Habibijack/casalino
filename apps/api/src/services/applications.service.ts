@@ -170,6 +170,7 @@ export async function createApplication(input: CreateApplicationInput) {
       desiredMoveDate: input.desiredMoveDate ?? null,
       coverLetter: input.coverLetter ?? null,
       hasSwissResidence: input.hasSwissResidence,
+      consentAt: input.consent ? new Date() : null,
       status: 'new',
     })
     .returning();

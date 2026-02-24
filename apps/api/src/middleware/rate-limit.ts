@@ -1,39 +1,75 @@
 import type { MiddlewareHandler } from 'hono';
 import type { AppEnv } from '../types';
+import IORedis from 'ioredis';
 
 /**
- * Simple in-memory rate limiter.
- * Production: replace with Redis-backed sliding window.
+ * Redis-backed sliding window rate limiter.
+ * Falls back to in-memory if Redis is unavailable.
  */
-
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
 
 interface RateLimitOptions {
   /** Max requests per window. Default: 100 */
   max?: number;
   /** Window duration in seconds. Default: 60 */
   windowSec?: number;
+  /** Key prefix for Redis. Default: 'rl' */
+  prefix?: string;
 }
+
+// Shared Redis connection (lazy)
+let _redis: IORedis | null = null;
+let _redisFailed = false;
+
+function getRedis(): IORedis | null {
+  if (_redisFailed) return null;
+  if (_redis) return _redis;
+
+  const redisUrl = process.env.REDIS_URL;
+  if (!redisUrl) return null;
+
+  try {
+    _redis = new IORedis(redisUrl, {
+      maxRetriesPerRequest: 1,
+      lazyConnect: true,
+      connectTimeout: 2000,
+    });
+
+    _redis.on('error', () => {
+      _redisFailed = true;
+      _redis = null;
+    });
+
+    return _redis;
+  } catch {
+    _redisFailed = true;
+    return null;
+  }
+}
+
+// In-memory fallback
+interface MemEntry {
+  count: number;
+  resetAt: number;
+}
+
+const memStore = new Map<string, MemEntry>();
+
+// Cleanup stale entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of memStore) {
+    if (entry.resetAt <= now) {
+      memStore.delete(key);
+    }
+  }
+}, 5 * 60 * 1000).unref();
 
 export function rateLimiter(
   options: RateLimitOptions = {},
 ): MiddlewareHandler<AppEnv> {
   const max = options.max ?? 100;
-  const windowMs = (options.windowSec ?? 60) * 1000;
-  const store = new Map<string, RateLimitEntry>();
-
-  // Cleanup stale entries every 5 minutes
-  setInterval(() => {
-    const now = Date.now();
-    for (const [key, entry] of store) {
-      if (entry.resetAt <= now) {
-        store.delete(key);
-      }
-    }
-  }, 5 * 60 * 1000).unref();
+  const windowSec = options.windowSec ?? 60;
+  const prefix = options.prefix ?? 'rl';
 
   return async (c, next) => {
     const ip =
@@ -41,40 +77,90 @@ export function rateLimiter(
       c.req.header('x-real-ip') ??
       'unknown';
 
-    const now = Date.now();
-    const existing = store.get(ip);
+    const key = `${prefix}:${ip}`;
+    const redis = getRedis();
 
-    if (!existing || existing.resetAt <= now) {
-      store.set(ip, { count: 1, resetAt: now + windowMs });
-      c.header('X-RateLimit-Limit', String(max));
-      c.header('X-RateLimit-Remaining', String(max - 1));
-      await next();
-      return;
+    let count: number;
+    let remaining: number;
+
+    if (redis) {
+      try {
+        // Redis sliding window: INCR + EXPIRE
+        count = await redis.incr(key);
+        if (count === 1) {
+          await redis.expire(key, windowSec);
+        }
+        remaining = Math.max(0, max - count);
+      } catch {
+        // Fallback to memory on Redis error
+        const result = memCheck(key, max, windowSec);
+        count = result.count;
+        remaining = result.remaining;
+      }
+    } else {
+      const result = memCheck(key, max, windowSec);
+      count = result.count;
+      remaining = result.remaining;
     }
 
-    existing.count += 1;
+    c.header('X-RateLimit-Limit', String(max));
+    c.header('X-RateLimit-Remaining', String(remaining));
 
-    if (existing.count > max) {
-      const retryAfter = Math.ceil(
-        (existing.resetAt - now) / 1000,
-      );
-      c.header('Retry-After', String(retryAfter));
-      c.header('X-RateLimit-Limit', String(max));
-      c.header('X-RateLimit-Remaining', '0');
+    if (count > max) {
+      c.header('Retry-After', String(windowSec));
       return c.json(
         {
           success: false,
           error: {
             code: 'RATE_LIMITED',
-            message: 'Zu viele Anfragen. Bitte versuchen Sie es spaeter erneut.',
+            message:
+              'Zu viele Anfragen. Bitte versuchen Sie es spaeter erneut.',
           },
         },
         429,
       );
     }
 
-    c.header('X-RateLimit-Limit', String(max));
-    c.header('X-RateLimit-Remaining', String(max - existing.count));
     await next();
   };
 }
+
+function memCheck(
+  key: string,
+  max: number,
+  windowSec: number,
+): { count: number; remaining: number } {
+  const now = Date.now();
+  const windowMs = windowSec * 1000;
+  const existing = memStore.get(key);
+
+  if (!existing || existing.resetAt <= now) {
+    memStore.set(key, { count: 1, resetAt: now + windowMs });
+    return { count: 1, remaining: max - 1 };
+  }
+
+  existing.count += 1;
+  return {
+    count: existing.count,
+    remaining: Math.max(0, max - existing.count),
+  };
+}
+
+// Pre-configured rate limiters for different tiers
+export const publicRateLimiter = rateLimiter({
+  max: 20,
+  windowSec: 60,
+  prefix: 'rl:pub',
+});
+
+export const aiRateLimiter = rateLimiter({
+  max: 30,
+  windowSec: 60,
+  prefix: 'rl:ai',
+});
+
+export const webhookRateLimiter = rateLimiter({
+  max: 500,
+  windowSec: 60,
+  prefix: 'rl:wh',
+});

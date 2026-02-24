@@ -87,6 +87,15 @@ export function Sidebar({ orgName, userName, userEmail }: SidebarProps) {
           {userName ?? userEmail}
         </p>
       </div>
+
+      <div className="flex gap-3 px-4 pb-3 text-[10px] text-sidebar-muted">
+        <a href="/impressum" target="_blank" rel="noopener noreferrer" className="hover:text-white">
+          Impressum
+        </a>
+        <a href="/datenschutz" target="_blank" rel="noopener noreferrer" className="hover:text-white">
+          Datenschutz
+        </a>
+      </div>
     </aside>
   );
 }

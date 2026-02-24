@@ -104,14 +104,16 @@ export function constructWebhookEvent(
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!stripe || !webhookSecret) {
-    console.warn('[stripe] Cannot verify webhook: missing key or secret');
+    // SECURITY: Reject webhooks entirely when secret is not configured.
+    // Never accept unverified events.
+    console.error('[stripe] Webhook rejected: STRIPE_WEBHOOK_SECRET not configured');
     return null;
   }
 
   try {
     return stripe.webhooks.constructEvent(payload, signature, webhookSecret);
   } catch (err) {
-    console.error('[stripe] Webhook verification failed:', err);
+    console.error('[stripe] Webhook signature verification failed:', err);
     return null;
   }
 }

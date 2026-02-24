@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import {
   inviteMemberSchema,
   updateMemberRoleSchema,
+  updateOrganizationSchema,
 } from '@casalino/shared';
 import type { AppEnv } from '../types';
 import { AppError } from '../lib/errors';
@@ -39,7 +40,11 @@ export const membersRouter = new Hono<AppEnv>()
     requireRole(orgRole, 'admin');
 
     const body = await c.req.json();
-    const org = await updateOrganization(orgId, userId, body);
+    const parsed = updateOrganizationSchema.safeParse(body);
+    if (!parsed.success) {
+      throw AppError.validation(parsed.error.errors[0]?.message ?? 'Ungueltige Daten');
+    }
+    const org = await updateOrganization(orgId, userId, parsed.data);
     return c.json({ success: true, data: org });
   })
 

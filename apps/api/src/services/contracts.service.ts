@@ -245,6 +245,7 @@ export async function sendForSignature(
     .set({
       status: 'sent',
       sentAt: new Date(),
+      signTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
       updatedAt: new Date(),
       ...(pdfPath ? { pdfStoragePath: pdfPath } : {}),
     })
@@ -285,7 +286,11 @@ export async function signContract(signToken: string) {
   const db = getDb();
 
   const [contract] = await db
-    .select({ id: contracts.id, status: contracts.status })
+    .select({
+      id: contracts.id,
+      status: contracts.status,
+      signTokenExpiresAt: contracts.signTokenExpiresAt,
+    })
     .from(contracts)
     .where(eq(contracts.signToken, signToken))
     .limit(1);
@@ -300,6 +305,10 @@ export async function signContract(signToken: string) {
 
   if (contract.status !== 'sent') {
     throw AppError.validation('Vertrag kann noch nicht unterschrieben werden');
+  }
+
+  if (contract.signTokenExpiresAt && new Date() > new Date(contract.signTokenExpiresAt)) {
+    throw AppError.validation('Link ist abgelaufen. Bitte kontaktieren Sie die Verwaltung.');
   }
 
   const [updated] = await db
@@ -372,6 +381,7 @@ export async function getContractByToken(signToken: string) {
       status: contracts.status,
       contractData: contracts.contractData,
       signedAt: contracts.signedAt,
+      signTokenExpiresAt: contracts.signTokenExpiresAt,
       listingAddress: listings.address,
       listingCity: listings.city,
       applicantName: applications.applicantName,
@@ -384,6 +394,10 @@ export async function getContractByToken(signToken: string) {
 
   if (!row) {
     throw AppError.notFound('Vertrag');
+  }
+
+  if (row.signTokenExpiresAt && new Date() > new Date(row.signTokenExpiresAt)) {
+    throw AppError.validation('Link ist abgelaufen. Bitte kontaktieren Sie die Verwaltung.');
   }
 
   return row;

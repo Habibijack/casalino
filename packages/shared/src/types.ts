@@ -15,6 +15,9 @@ import {
   updateViewingStatusSchema,
   updateContractStatusSchema,
   updateMemberRoleSchema,
+  updateContractDataSchema,
+  updateHandoverDataSchema,
+  updateOrganizationSchema,
 } from './validators';
 
 // ---------------------
@@ -36,6 +39,9 @@ export type UpdateMemberRoleInput = z.infer<typeof updateMemberRoleSchema>;
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type ListingFilterInput = z.infer<typeof listingFilterSchema>;
 export type UploadDocumentInput = z.infer<typeof uploadDocumentSchema>;
+export type UpdateContractDataInput = z.infer<typeof updateContractDataSchema>;
+export type UpdateHandoverDataInput = z.infer<typeof updateHandoverDataSchema>;
+export type UpdateOrganizationInput = z.infer<typeof updateOrganizationSchema>;
 
 // ---------------------
 // API Response Types

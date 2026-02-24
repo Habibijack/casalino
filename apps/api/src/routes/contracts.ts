@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { createContractSchema } from '@casalino/shared';
+import { createContractSchema, updateContractDataSchema, updateHandoverDataSchema } from '@casalino/shared';
 import type { AppEnv } from '../types';
 import { AppError } from '../lib/errors';
 import { requireRole } from '../lib/query-helpers';
@@ -57,7 +57,11 @@ export const contractsRouter = new Hono<AppEnv>()
 
     const id = c.req.param('id');
     const body = await c.req.json();
-    const contract = await updateContractData(orgId, userId, id, body);
+    const parsed = updateContractDataSchema.safeParse(body);
+    if (!parsed.success) {
+      throw AppError.validation(parsed.error.errors[0]?.message ?? 'Ungueltige Vertragsdaten');
+    }
+    const contract = await updateContractData(orgId, userId, id, parsed.data);
     return c.json({ success: true, data: contract });
   })
 
@@ -69,7 +73,11 @@ export const contractsRouter = new Hono<AppEnv>()
 
     const id = c.req.param('id');
     const body = await c.req.json();
-    const contract = await updateHandoverData(orgId, userId, id, body);
+    const parsed = updateHandoverDataSchema.safeParse(body);
+    if (!parsed.success) {
+      throw AppError.validation(parsed.error.errors[0]?.message ?? 'Ungueltige Uebergabedaten');
+    }
+    const contract = await updateHandoverData(orgId, userId, id, parsed.data);
     return c.json({ success: true, data: contract });
   })
 

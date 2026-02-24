@@ -109,8 +109,33 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t px-6 py-6 text-center text-sm text-muted-foreground lg:px-12">
-        &copy; {new Date().getFullYear()} Casalino. Made in Switzerland.
+      <footer className="border-t px-6 py-8 lg:px-12">
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-4 sm:flex-row sm:justify-between">
+          <p className="text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} SwissCreo GmbH. Made in
+            Switzerland.
+          </p>
+          <nav className="flex gap-6">
+            <Link
+              href="/impressum"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Impressum
+            </Link>
+            <Link
+              href="/agb"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              AGB
+            </Link>
+            <Link
+              href="/datenschutz"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              Datenschutz
+            </Link>
+          </nav>
+        </div>
       </footer>
     </div>
   );

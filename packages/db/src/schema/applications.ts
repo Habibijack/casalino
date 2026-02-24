@@ -30,6 +30,8 @@ export const applications = pgTable('applications', {
   scoreCommunication: integer('score_communication'),
   scoreCredit: integer('score_credit'),
   aiSummary: text('ai_summary'),
+  // Consent
+  consentAt: timestamp('consent_at', { withTimezone: true }),
   // Status
   status: text('status').notNull().default('new'),
   scoredAt: timestamp('scored_at', { withTimezone: true }),
