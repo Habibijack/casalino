@@ -1,6 +1,8 @@
 import type { ErrorHandler } from 'hono';
 import type { ContentfulStatusCode } from 'hono/utils/http-status';
+import { ZodError } from 'zod';
 import { AppError } from '../lib/errors';
+import { logger } from '../lib/logger';
 
 const STATUS_MAP: Record<number, ContentfulStatusCode> = {
   400: 400,
@@ -18,6 +20,7 @@ function toStatusCode(code: number): ContentfulStatusCode {
 }
 
 export const errorHandler: ErrorHandler = (err, c) => {
+  // Known application errors
   if (err instanceof AppError) {
     return c.json(
       { success: false, error: { code: err.code, message: err.message } },
@@ -25,7 +28,27 @@ export const errorHandler: ErrorHandler = (err, c) => {
     );
   }
 
-  console.error('Unhandled error:', err);
+  // Zod validation errors
+  if (err instanceof ZodError) {
+    const firstError = err.errors[0];
+    const message = firstError
+      ? `${firstError.path.join('.')}: ${firstError.message}`
+      : 'Ungueltige Eingabe';
+
+    return c.json(
+      { success: false, error: { code: 'VALIDATION_ERROR', message } },
+      400,
+    );
+  }
+
+  // Unknown errors — log and return generic message
+  logger.error('unhandled_error', {
+    name: err.name,
+    message: err.message,
+    stack: process.env.NODE_ENV !== 'production' ? err.stack : undefined,
+    path: c.req.path,
+    method: c.req.method,
+  });
 
   return c.json(
     { success: false, error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } },

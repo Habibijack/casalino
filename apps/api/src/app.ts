@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { logger } from 'hono/logger';
 import type { AppEnv } from './types';
 import { errorHandler } from './middleware/error-handler';
+import { requestLogger } from './middleware/request-logger';
 import { rateLimiter, publicRateLimiter, webhookRateLimiter } from './middleware/rate-limit';
 import { authMiddleware } from './middleware/auth';
 import { orgContextMiddleware } from './middleware/org-context';
@@ -27,7 +27,7 @@ const app = new Hono<AppEnv>();
 // Global middleware
 // ---------------------
 
-app.use('*', logger());
+app.use('*', requestLogger);
 app.use('*', rateLimiter({ max: 100, windowSec: 60 }));
 
 const ALLOWED_ORIGINS = (process.env.CORS_ORIGINS ?? 'http://localhost:3737')
